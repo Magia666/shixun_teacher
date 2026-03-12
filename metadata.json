@@ -1,0 +1,5 @@
+{
+  "name": "金隅实训系统",
+  "description": "面向院校的实训教学管理平台，整合实训课程、学生管理、作业考试及成绩分析功能。",
+  "requestFramePermissions": []
+}
