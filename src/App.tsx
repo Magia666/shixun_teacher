@@ -124,14 +124,14 @@ let initialTeachers = [
 ];
 
 let initialStudents = [
-  { id: 'S2023001', name: '陈明', school: '深圳致学商科教育咨询有限公司', className: '电商一班', major: '电子商务', account: 'chenming', phone: '13900139001', date: '2023-09-01' },
-  { id: 'S2023002', name: '林悦', school: '深圳致学商科教育咨询有限公司', className: '电商一班', major: '电子商务', account: 'linyue', phone: '13900139002', date: '2023-09-01' },
-  { id: 'S2023003', name: '赵强', school: '深圳致学商科教育咨询有限公司', className: '计算机二班', major: '计算机科学', account: 'zhaoqiang', phone: '13900139003', date: '2023-09-02' },
+  { id: 'S2023001', name: '陈明', school: '深圳致学商科教育咨询有限公司', className: '电商一班', major: '电子商务', account: 'chenming', phone: '13900139001', date: '2023-09-01', domain: 'edu.example.com', status: '正常' },
+  { id: 'S2023002', name: '林悦', school: '深圳致学商科教育咨询有限公司', className: '电商一班', major: '电子商务', account: 'linyue', phone: '13900139002', date: '2023-09-01', domain: 'edu.example.com', status: '正常' },
+  { id: 'S2023003', name: '赵强', school: '深圳致学商科教育咨询有限公司', className: '计算机二班', major: '计算机科学', account: 'zhaoqiang', phone: '13900139003', date: '2023-09-02', domain: 'edu.example.com', status: '禁用' },
 ];
 
 let initialClasses = [
-  { id: 'C001', name: '电商一班', type: '电商班', studentCount: 45, teacher: '李晓华', date: '2023-09-01' },
-  { id: 'C002', name: '计算机二班', type: '计算机班', studentCount: 50, teacher: '王伟', date: '2023-09-02' },
+  { id: 'C001', name: '电商一班', type: '电商班', studentCount: 45, teacher: '李晓华', counselor: '张三', date: '2023-09-01' },
+  { id: 'C002', name: '计算机二班', type: '计算机班', studentCount: 50, teacher: '王伟', counselor: '李四', date: '2023-09-02' },
 ];
 
 let initialTrainings = [
@@ -188,12 +188,48 @@ function ActionButton({ icon: Icon, label, onClick, variant = 'primary' }: { ico
   );
 }
 
-function Table({ columns, data, actions }: { columns: any[], data: any[], actions?: (row: any) => React.ReactNode }) {
+function Table({ columns, data, actions, selectable, selectedIds = [], onSelectionChange, idAccessor = 'id' }: { columns: any[], data: any[], actions?: (row: any) => React.ReactNode, selectable?: boolean, selectedIds?: string[], onSelectionChange?: (ids: string[]) => void, idAccessor?: string }) {
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (onSelectionChange) {
+      if (e.target.checked) {
+        onSelectionChange(data.map(row => row[idAccessor]));
+      } else {
+        onSelectionChange([]);
+      }
+    }
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (onSelectionChange) {
+      if (checked) {
+        onSelectionChange([...selectedIds, id]);
+      } else {
+        onSelectionChange(selectedIds.filter(selectedId => selectedId !== id));
+      }
+    }
+  };
+
+  const allSelected = data.length > 0 && selectedIds.length === data.length;
+  const someSelected = selectedIds.length > 0 && selectedIds.length < data.length;
+
   return (
     <div className="overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
+            {selectable && (
+              <th scope="col" className="px-6 py-3 text-left w-12">
+                <input 
+                  type="checkbox" 
+                  className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  checked={allSelected}
+                  ref={input => {
+                    if (input) input.indeterminate = someSelected;
+                  }}
+                  onChange={handleSelectAll}
+                />
+              </th>
+            )}
             {columns.map((col, i) => (
               <th key={i} scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {col.header}
@@ -209,6 +245,16 @@ function Table({ columns, data, actions }: { columns: any[], data: any[], action
         <tbody className="bg-white divide-y divide-gray-200">
           {data.map((row, i) => (
             <tr key={i} className="hover:bg-gray-50">
+              {selectable && (
+                <td className="px-6 py-4 whitespace-nowrap w-12">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    checked={selectedIds.includes(row[idAccessor])}
+                    onChange={(e) => handleSelectRow(row[idAccessor], e.target.checked)}
+                  />
+                </td>
+              )}
               {columns.map((col, j) => (
                 <td key={j} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {col.render ? col.render(row) : row[col.accessor]}
@@ -230,8 +276,9 @@ function Table({ columns, data, actions }: { columns: any[], data: any[], action
 function StatusBadge({ status }: { status: string }) {
   let color = 'bg-gray-100 text-gray-800';
   if (status === '进行中' || status === '已提交') color = 'bg-blue-100 text-blue-800';
-  if (status === '已完成' || status === '已批改' || status === '已结束' || status === '已安排') color = 'bg-green-100 text-green-800';
+  if (status === '已完成' || status === '已批改' || status === '已结束' || status === '已安排' || status === '启用' || status === '正常') color = 'bg-green-100 text-green-800';
   if (status === '未开始' || status === '未提交' || status === '未安排') color = 'bg-yellow-100 text-yellow-800';
+  if (status === '禁用' || status === '停用') color = 'bg-red-100 text-red-800';
   
   return (
     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${color}`}>
@@ -438,8 +485,15 @@ function Dashboard() {
 function TeacherManagement() {
   const [teachers, setTeachers] = useState(initialTeachers);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', school: '', account: '', phone: '', role: '教师' });
+  const [view, setView] = useState<'list' | 'add'>('list');
+  const [formData, setFormData] = useState({ 
+    id: '', 
+    name: '', 
+    school: '深圳致学商科教育咨询有限公司', 
+    password: '123456gzgmjs', 
+    phone: '', 
+    role: '教师' 
+  });
 
   const filteredTeachers = teachers.filter(t => 
     t.name.includes(searchTerm) || t.account.includes(searchTerm) || t.phone.includes(searchTerm)
@@ -453,27 +507,45 @@ function TeacherManagement() {
   };
 
   const handleAdd = () => {
-    if (!formData.name || !formData.account || !formData.phone || !formData.school) {
+    if (!formData.id || !formData.name || !formData.school || !formData.password || !formData.phone) {
       showToast('请填写完整信息', 'error');
       return;
     }
     const newTeacher = {
-      id: `T00${teachers.length + 1}`,
-      ...formData,
+      id: formData.id,
+      name: formData.name,
+      school: formData.school,
+      account: formData.id,
+      phone: formData.phone,
+      role: formData.role,
       date: new Date().toISOString().split('T')[0]
     };
     setTeachers([...teachers, newTeacher]);
-    setIsAddModalOpen(false);
-    setFormData({ name: '', school: '', account: '', phone: '', role: '教师' });
+    setView('list');
+    setFormData({ id: '', name: '', school: '深圳致学商科教育咨询有限公司', password: '123456gzgmjs', phone: '', role: '教师' });
     showToast('教师添加成功', 'success');
   };
 
   const columns = [
-    { header: '教职工编号', accessor: 'id' },
-    { header: '姓名', accessor: 'name' },
+    { 
+      header: '教师信息', 
+      render: (row: any) => (
+        <div>
+          <div className="font-medium text-gray-900">{row.name}</div>
+          <div className="text-xs text-gray-500 mt-0.5">编号: {row.id}</div>
+        </div>
+      ) 
+    },
     { header: '院校名称', accessor: 'school' },
-    { header: '账号', accessor: 'account' },
-    { header: '手机号码', accessor: 'phone' },
+    { 
+      header: '联系方式', 
+      render: (row: any) => (
+        <div>
+          <div className="text-gray-900">{row.phone}</div>
+          <div className="text-xs text-gray-500 mt-0.5">账号: {row.account}</div>
+        </div>
+      ) 
+    },
     { header: '角色权限', accessor: 'role' },
     { header: '创建日期', accessor: 'date' },
   ];
@@ -486,44 +558,134 @@ function TeacherManagement() {
     </div>
   );
 
+  if (view === 'add') {
+    return (
+      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+        <div className="flex space-x-4 mb-10">
+          <button className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition-colors">批量导入</button>
+          <button className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition-colors">下载导入模板</button>
+        </div>
+
+        <div className="max-w-3xl space-y-8">
+          {/* 教职工编号 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              <span className="text-red-500 mr-1">*</span> 教职工编号:
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text" 
+                value={formData.id}
+                onChange={e => setFormData({...formData, id: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                placeholder="请输入教职工编号" 
+              />
+            </div>
+          </div>
+
+          {/* 登录账号 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              登录账号:
+            </div>
+            <div className="flex-1 text-gray-900">
+              将根据您填写的教师编号结合系统登录账号进行生成，请先填写教职工编号
+            </div>
+          </div>
+
+          {/* 姓名 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              <span className="text-red-500 mr-1">*</span> 姓名:
+            </div>
+            <div className="flex-1 relative">
+              <input 
+                type="text" 
+                maxLength={100}
+                value={formData.name}
+                onChange={e => setFormData({...formData, name: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 pr-16 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                placeholder="请输入教师姓名" 
+              />
+              <span className="absolute right-4 top-2.5 text-gray-400 text-sm">{formData.name.length}/100</span>
+            </div>
+          </div>
+
+          {/* 院校名称 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              <span className="text-red-500 mr-1">*</span> 院校名称:
+            </div>
+            <div className="flex-1 relative">
+              <input 
+                type="text" 
+                maxLength={50}
+                value={formData.school}
+                onChange={e => setFormData({...formData, school: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 pr-16 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+              />
+              <span className="absolute right-4 top-2.5 text-gray-400 text-sm">{formData.school.length}/50</span>
+            </div>
+          </div>
+
+          {/* 密码 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              <span className="text-red-500 mr-1">*</span> 密码:
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text" 
+                value={formData.password}
+                onChange={e => setFormData({...formData, password: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+              />
+            </div>
+          </div>
+
+          {/* 手机号 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              <span className="text-red-500 mr-1">*</span> 手机号:
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text" 
+                value={formData.phone}
+                onChange={e => setFormData({...formData, phone: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                placeholder="请输入手机号码"
+              />
+            </div>
+          </div>
+
+          {/* 确认添加 */}
+          <div className="flex items-center pt-6">
+            <div className="w-32 pr-4"></div>
+            <div className="flex-1">
+              <button onClick={handleAdd} className="bg-indigo-600 text-white px-8 py-2.5 rounded hover:bg-indigo-700 transition-colors">
+                确认添加
+              </button>
+              <button onClick={() => setView('list')} className="ml-4 text-gray-500 hover:text-gray-700 px-4 py-2">
+                返回列表
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <SearchBar placeholder="搜索教师姓名/账号/手机号" value={searchTerm} onChange={setSearchTerm} />
         <div className="flex space-x-3">
           <ActionButton icon={Upload} label="批量导入" variant="secondary" onClick={() => showToast('打开批量导入弹窗')} />
-          <ActionButton icon={Plus} label="添加账号" onClick={() => setIsAddModalOpen(true)} />
+          <ActionButton icon={Plus} label="添加账号" onClick={() => setView('add')} />
         </div>
       </div>
       <Table columns={columns} data={filteredTeachers} actions={renderActions} />
-      
-      <Modal title="添加教师" isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSubmit={handleAdd}>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">姓名</label>
-            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入教师姓名" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">院校名称</label>
-            <input type="text" value={formData.school} onChange={e => setFormData({...formData, school: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入院校名称" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">账号</label>
-            <input type="text" value={formData.account} onChange={e => setFormData({...formData, account: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入登录账号" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">手机号码</label>
-            <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入手机号码" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">角色权限</label>
-            <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-              <option value="教师">教师</option>
-              <option value="管理员">管理员</option>
-            </select>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }
@@ -533,8 +695,18 @@ function StudentManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [classFilter, setClassFilter] = useState('所有班级');
   const [majorFilter, setMajorFilter] = useState('所有专业');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', school: '', className: '电商一班', major: '电子商务', account: '', phone: '' });
+  const [view, setView] = useState<'list' | 'add'>('list');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [formData, setFormData] = useState({ 
+    id: '', 
+    name: '', 
+    school: '深圳致学商科教育咨询有限公司', 
+    password: '123456gzgmjs', 
+    className: '', 
+    major: '', 
+    phone: '',
+    domain: 'edu.example.com'
+  });
 
   const filteredStudents = students.filter(s => {
     const matchSearch = s.name.includes(searchTerm) || s.id.includes(searchTerm);
@@ -546,54 +718,298 @@ function StudentManagement() {
   const handleDelete = (id: string) => {
     showConfirm('确定要移除该学生吗？', () => {
       setStudents(students.filter(s => s.id !== id));
+      setSelectedIds(selectedIds.filter(selectedId => selectedId !== id));
       showToast('学生已移除', 'success');
     });
   };
 
+  const handleBatchEnable = () => {
+    if (selectedIds.length === 0) {
+      showToast('请先选择学生', 'error');
+      return;
+    }
+    showConfirm(`确定要启用选中的 ${selectedIds.length} 名学生吗？`, () => {
+      setStudents(students.map(s => selectedIds.includes(s.id) ? { ...s, status: '正常' } : s));
+      showToast('批量启用成功', 'success');
+      setSelectedIds([]);
+    });
+  };
+
+  const handleBatchDisable = () => {
+    if (selectedIds.length === 0) {
+      showToast('请先选择学生', 'error');
+      return;
+    }
+    showConfirm(`确定要禁用选中的 ${selectedIds.length} 名学生吗？`, () => {
+      setStudents(students.map(s => selectedIds.includes(s.id) ? { ...s, status: '禁用' } : s));
+      showToast('批量禁用成功', 'success');
+      setSelectedIds([]);
+    });
+  };
+
+  const handleBatchEdit = () => {
+    if (selectedIds.length === 0) {
+      showToast('请先选择学生', 'error');
+      return;
+    }
+    showToast(`打开批量修改弹窗，共选中 ${selectedIds.length} 名学生`);
+  };
+
   const handleAdd = () => {
-    if (!formData.name || !formData.account || !formData.phone || !formData.school) {
+    if (!formData.id || !formData.name || !formData.school || !formData.password || !formData.className) {
       showToast('请填写完整信息', 'error');
       return;
     }
     const newStudent = {
-      id: `S202300${students.length + 1}`,
-      ...formData,
+      id: formData.id,
+      name: formData.name,
+      school: formData.school,
+      className: formData.className,
+      major: formData.major || '未分配',
+      account: formData.id,
+      phone: formData.phone || '未填写',
+      domain: formData.domain || 'edu.example.com',
+      status: '正常',
       date: new Date().toISOString().split('T')[0]
     };
     setStudents([...students, newStudent]);
-    setIsAddModalOpen(false);
-    setFormData({ name: '', school: '', className: '电商一班', major: '电子商务', account: '', phone: '' });
+    setView('list');
+    setFormData({ id: '', name: '', school: '深圳致学商科教育咨询有限公司', password: '123456gzgmjs', className: '', major: '', phone: '', domain: 'edu.example.com' });
     showToast('学生添加成功', 'success');
   };
 
   const columns = [
-    { header: '学生学号', accessor: 'id' },
-    { header: '姓名', accessor: 'name' },
+    { 
+      header: '学生信息', 
+      render: (row: any) => (
+        <div>
+          <div className="font-medium text-gray-900">{row.name}</div>
+          <div className="text-xs text-gray-500 mt-0.5">学号: {row.id}</div>
+        </div>
+      ) 
+    },
     { header: '所属院校', accessor: 'school' },
-    { header: '班级', accessor: 'className' },
-    { header: '专业', accessor: 'major' },
-    { header: '账号', accessor: 'account' },
-    { header: '手机号码', accessor: 'phone' },
+    { 
+      header: '班级/专业', 
+      render: (row: any) => (
+        <div>
+          <div className="text-gray-900">{row.className}</div>
+          <div className="text-xs text-gray-500 mt-0.5">{row.major}</div>
+        </div>
+      ) 
+    },
+    { 
+      header: '联系方式', 
+      render: (row: any) => (
+        <div>
+          <div className="text-gray-900">{row.phone}</div>
+          <div className="text-xs text-gray-500 mt-0.5">账号: {row.account}</div>
+        </div>
+      ) 
+    },
+    { header: '域名绑定', accessor: 'domain' },
+    { header: '状态', render: (row: any) => <StatusBadge status={row.status} /> },
     { header: '创建日期', accessor: 'date' },
   ];
 
   const renderActions = (row: any) => (
     <div className="flex justify-end space-x-2">
       <button className="text-indigo-600 hover:text-indigo-900" title="修改"><Edit size={18} /></button>
-      <button className="text-yellow-600 hover:text-yellow-900" title="禁用"><Ban size={18} /></button>
+      {row.status === '正常' ? (
+        <button onClick={() => {
+          setStudents(students.map(s => s.id === row.id ? { ...s, status: '禁用' } : s));
+          showToast('已禁用', 'success');
+        }} className="text-yellow-600 hover:text-yellow-900" title="禁用"><Ban size={18} /></button>
+      ) : (
+        <button onClick={() => {
+          setStudents(students.map(s => s.id === row.id ? { ...s, status: '正常' } : s));
+          showToast('已启用', 'success');
+        }} className="text-green-600 hover:text-green-900" title="启用"><CheckCircle size={18} /></button>
+      )}
       <button onClick={() => handleDelete(row.id)} className="text-red-600 hover:text-red-900" title="移除"><Trash2 size={18} /></button>
     </div>
   );
 
+  if (view === 'add') {
+    return (
+      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+        <div className="flex space-x-4 mb-10">
+          <button className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition-colors">批量导入</button>
+          <button className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition-colors">下载导入模板</button>
+        </div>
+
+        <div className="max-w-3xl space-y-8">
+          {/* 学生学号 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              <span className="text-red-500 mr-1">*</span> 学生学号:
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text" 
+                value={formData.id}
+                onChange={e => setFormData({...formData, id: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                placeholder="请输入学生学号" 
+              />
+            </div>
+          </div>
+
+          {/* 登录账号 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              登录账号:
+            </div>
+            <div className="flex-1 text-gray-900">
+              将根据您填写的学号结合系统登录账号进行生成，请先填写学生学号
+            </div>
+          </div>
+
+          {/* 姓名 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              <span className="text-red-500 mr-1">*</span> 姓名:
+            </div>
+            <div className="flex-1 relative">
+              <input 
+                type="text" 
+                maxLength={20}
+                value={formData.name}
+                onChange={e => setFormData({...formData, name: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 pr-16 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                placeholder="请输入学生姓名" 
+              />
+              <span className="absolute right-4 top-2.5 text-gray-400 text-sm">{formData.name.length}/20</span>
+            </div>
+          </div>
+
+          {/* 院校名称 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              <span className="text-red-500 mr-1">*</span> 院校名称:
+            </div>
+            <div className="flex-1 relative">
+              <input 
+                type="text" 
+                maxLength={50}
+                value={formData.school}
+                onChange={e => setFormData({...formData, school: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 pr-16 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+              />
+              <span className="absolute right-4 top-2.5 text-gray-400 text-sm">{formData.school.length}/50</span>
+            </div>
+          </div>
+
+          {/* 密码 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              <span className="text-red-500 mr-1">*</span> 密码:
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text" 
+                value={formData.password}
+                onChange={e => setFormData({...formData, password: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+              />
+            </div>
+          </div>
+
+          {/* 实训班级 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              <span className="text-red-500 mr-1">*</span> 实训班级:
+            </div>
+            <div className="flex-1 flex items-center space-x-4">
+              <select 
+                value={formData.className}
+                onChange={e => setFormData({...formData, className: e.target.value})}
+                className="flex-1 border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-700 bg-white"
+              >
+                <option value="" disabled>请选择实训班级</option>
+                <option value="电商一班">电商一班</option>
+                <option value="计算机二班">计算机二班</option>
+              </select>
+              <button className="text-indigo-600 hover:text-indigo-700 flex items-center whitespace-nowrap">
+                <Plus size={16} className="mr-1" /> 添加实训班级
+              </button>
+            </div>
+          </div>
+
+          {/* 手机号 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              手机号:
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text" 
+                value={formData.phone}
+                onChange={e => setFormData({...formData, phone: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                placeholder="请输入手机号码"
+              />
+            </div>
+          </div>
+
+          {/* 专业 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              专业:
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text" 
+                value={formData.major}
+                onChange={e => setFormData({...formData, major: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                placeholder="请输入专业"
+              />
+            </div>
+          </div>
+
+          {/* 域名绑定 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              域名绑定:
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text" 
+                value={formData.domain}
+                onChange={e => setFormData({...formData, domain: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                placeholder="例如: edu.example.com"
+              />
+            </div>
+          </div>
+
+          {/* 确认添加 */}
+          <div className="flex items-center pt-6">
+            <div className="w-32 pr-4"></div>
+            <div className="flex-1">
+              <button onClick={handleAdd} className="bg-indigo-600 text-white px-8 py-2.5 rounded hover:bg-indigo-700 transition-colors">
+                确认添加
+              </button>
+              <button onClick={() => setView('list')} className="ml-4 text-gray-500 hover:text-gray-700 px-4 py-2">
+                返回列表
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="flex space-x-4 flex-1">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
+        <div className="flex flex-wrap items-center gap-4 flex-1">
           <SearchBar placeholder="搜索学生姓名/学号" value={searchTerm} onChange={setSearchTerm} />
           <select 
             value={classFilter}
             onChange={(e) => setClassFilter(e.target.value)}
-            className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
+            className="block w-40 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
           >
             <option>所有班级</option>
             <option>电商一班</option>
@@ -602,56 +1018,41 @@ function StudentManagement() {
           <select 
             value={majorFilter}
             onChange={(e) => setMajorFilter(e.target.value)}
-            className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
+            className="block w-40 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
           >
             <option>所有专业</option>
             <option>电子商务</option>
             <option>计算机科学</option>
           </select>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex items-center space-x-3">
           <ActionButton icon={Upload} label="批量导入" variant="secondary" onClick={() => showToast('打开批量导入弹窗')} />
-          <ActionButton icon={Plus} label="添加账号" onClick={() => setIsAddModalOpen(true)} />
+          <ActionButton icon={Plus} label="添加账号" onClick={() => setView('add')} />
         </div>
       </div>
-      <Table columns={columns} data={filteredStudents} actions={renderActions} />
-      
-      <Modal title="添加学生" isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSubmit={handleAdd}>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">姓名</label>
-            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入学生姓名" />
+
+      {selectedIds.length > 0 && (
+        <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 flex items-center justify-between">
+          <div className="text-sm text-indigo-700 font-medium flex items-center">
+            <CheckCircle size={16} className="mr-2" />
+            已选择 {selectedIds.length} 名学生
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">所属院校</label>
-            <input type="text" value={formData.school} onChange={e => setFormData({...formData, school: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入院校名称" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">班级</label>
-              <select value={formData.className} onChange={e => setFormData({...formData, className: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                <option value="电商一班">电商一班</option>
-                <option value="计算机二班">计算机二班</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">专业</label>
-              <select value={formData.major} onChange={e => setFormData({...formData, major: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                <option value="电子商务">电子商务</option>
-                <option value="计算机科学">计算机科学</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">账号</label>
-            <input type="text" value={formData.account} onChange={e => setFormData({...formData, account: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入登录账号" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">手机号码</label>
-            <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入手机号码" />
+          <div className="flex space-x-3">
+            <ActionButton icon={CheckCircle} label="批量启用" variant="secondary" onClick={handleBatchEnable} />
+            <ActionButton icon={Ban} label="批量禁用" variant="secondary" onClick={handleBatchDisable} />
+            <ActionButton icon={Edit} label="批量修改" variant="secondary" onClick={handleBatchEdit} />
           </div>
         </div>
-      </Modal>
+      )}
+
+      <Table 
+        columns={columns} 
+        data={filteredStudents} 
+        actions={renderActions} 
+        selectable 
+        selectedIds={selectedIds} 
+        onSelectionChange={setSelectedIds} 
+      />
     </div>
   );
 }
@@ -659,8 +1060,8 @@ function StudentManagement() {
 function ClassManagement() {
   const [classes, setClasses] = useState(initialClasses);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', type: '电商班', teacher: '' });
+  const [view, setView] = useState<'list' | 'add'>('list');
+  const [formData, setFormData] = useState({ name: '', type: '必修', teacher: '', counselor: '' });
 
   const filteredClasses = classes.filter(c => c.name.includes(searchTerm));
 
@@ -672,19 +1073,22 @@ function ClassManagement() {
   };
 
   const handleAdd = () => {
-    if (!formData.name || !formData.type || !formData.teacher) {
+    if (!formData.name || !formData.type || !formData.teacher || !formData.counselor) {
       showToast('请填写完整信息', 'error');
       return;
     }
     const newClass = {
       id: `C00${classes.length + 1}`,
-      ...formData,
+      name: formData.name,
+      type: formData.type,
+      teacher: formData.teacher,
+      counselor: formData.counselor,
       studentCount: 0,
       date: new Date().toISOString().split('T')[0]
     };
     setClasses([...classes, newClass]);
-    setIsAddModalOpen(false);
-    setFormData({ name: '', type: '电商班', teacher: '' });
+    setView('list');
+    setFormData({ name: '', type: '必修', teacher: '', counselor: '' });
     showToast('班级添加成功', 'success');
   };
 
@@ -693,6 +1097,7 @@ function ClassManagement() {
     { header: '班级类型', accessor: 'type' },
     { header: '学生数量', accessor: 'studentCount' },
     { header: '班主任', accessor: 'teacher' },
+    { header: '辅导员', accessor: 'counselor' },
     { header: '创建时间', accessor: 'date' },
   ];
 
@@ -703,37 +1108,117 @@ function ClassManagement() {
     </div>
   );
 
+  if (view === 'add') {
+    return (
+      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+        <div className="flex space-x-4 mb-10">
+          <button className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition-colors">批量导入</button>
+          <button className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition-colors">下载导入模板</button>
+        </div>
+
+        <div className="max-w-3xl space-y-8">
+          {/* 班级名称 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              <span className="text-red-500 mr-1">*</span> 班级名称:
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text" 
+                value={formData.name}
+                onChange={e => setFormData({...formData, name: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                placeholder="请输入班级名称" 
+              />
+            </div>
+          </div>
+
+          {/* 班级类型 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              班级类型:
+            </div>
+            <div className="flex-1">
+              <select 
+                value={formData.type}
+                onChange={e => setFormData({...formData, type: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white"
+              >
+                <option value="必修">必修</option>
+                <option value="选修">选修</option>
+              </select>
+            </div>
+          </div>
+
+          {/* 学生数量 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              学生数量:
+            </div>
+            <div className="flex-1 text-gray-900">
+              0
+            </div>
+          </div>
+
+          {/* 班主任 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              班主任:
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text" 
+                value={formData.teacher}
+                onChange={e => setFormData({...formData, teacher: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                placeholder="请输入班主任姓名" 
+              />
+            </div>
+          </div>
+
+          {/* 辅导员 */}
+          <div className="flex items-center">
+            <div className="w-32 text-right pr-4 font-bold text-gray-700">
+              辅导员:
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text" 
+                value={formData.counselor}
+                onChange={e => setFormData({...formData, counselor: e.target.value})}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                placeholder="请输入辅导员姓名" 
+              />
+            </div>
+          </div>
+
+          {/* 确认添加 */}
+          <div className="flex items-center pt-6">
+            <div className="w-32 pr-4"></div>
+            <div className="flex-1">
+              <button onClick={handleAdd} className="bg-indigo-600 text-white px-8 py-2.5 rounded hover:bg-indigo-700 transition-colors">
+                确认添加
+              </button>
+              <button onClick={() => setView('list')} className="ml-4 text-gray-500 hover:text-gray-700 px-4 py-2">
+                返回列表
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <SearchBar placeholder="搜索班级名称" value={searchTerm} onChange={setSearchTerm} />
         <div className="flex space-x-3">
           <ActionButton icon={Users} label="批量导入学生至班级" variant="secondary" onClick={() => showToast('打开导入弹窗')} />
-          <ActionButton icon={Plus} label="添加班级" onClick={() => setIsAddModalOpen(true)} />
+          <ActionButton icon={Plus} label="添加班级" onClick={() => setView('add')} />
         </div>
       </div>
       <Table columns={columns} data={filteredClasses} actions={renderActions} />
-      
-      <Modal title="添加班级" isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSubmit={handleAdd}>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">班级名称</label>
-            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="例如: 电商一班" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">班级类型</label>
-            <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-              <option value="电商班">电商班</option>
-              <option value="计算机班">计算机班</option>
-              <option value="设计班">设计班</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">班主任</label>
-            <input type="text" value={formData.teacher} onChange={e => setFormData({...formData, teacher: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入教师姓名" />
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }
@@ -820,129 +1305,145 @@ function TrainingManagement() {
   );
 }
 
-function CourseSchedule() {
-  const [courses, setCourses] = useState(initialCourses);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('所有类型');
-  const [teacherFilter, setTeacherFilter] = useState('所有教师');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', type: '理论课', className: '', teacher: '', time: '', location: '' });
-  const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+function TeachingCalendar() {
+  const [examStatus, setExamStatus] = useState('全部');
+  const [courseType, setCourseType] = useState('全部');
+  const [courseStatus, setCourseStatus] = useState('全部');
+  const [teacher, setTeacher] = useState('全部');
+  const [period, setPeriod] = useState('2026-03');
 
-  const filteredCourses = courses.filter(c => {
-    const matchSearch = c.name.includes(searchTerm);
-    const matchType = typeFilter === '所有类型' || c.type === typeFilter;
-    const matchTeacher = teacherFilter === '所有教师' || c.teacher === teacherFilter;
-    return matchSearch && matchType && matchTeacher;
+  const handleSearch = () => {
+    showToast('搜索成功', 'success');
+  };
+
+  const handleClear = () => {
+    setExamStatus('全部');
+    setCourseType('全部');
+    setCourseStatus('全部');
+    setTeacher('全部');
+    setPeriod('2026-03');
+  };
+
+  const daysOfWeek = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
+  
+  // Mock calendar data for March 2026
+  // March 1st 2026 is a Sunday (index 6)
+  const calendarDays = Array.from({ length: 35 }, (_, i) => {
+    const dayNumber = i - 5; // offset so 1 is on Sunday
+    if (dayNumber > 0 && dayNumber <= 31) {
+      return {
+        date: dayNumber,
+        events: dayNumber === 2 ? [
+          { time: '上午第三节', class: '电商', more: 1 }
+        ] : []
+      };
+    }
+    return null;
   });
 
-  const handleDelete = (id: string) => {
-    showConfirm('确定要删除该课程吗？', () => {
-      setCourses(courses.filter(c => c.id !== id));
-      showToast('课程已删除', 'success');
-    });
-  };
-
-  const handleAdd = () => {
-    if (!formData.name || !formData.className || !formData.teacher || !formData.time) {
-      showToast('请填写完整信息', 'error');
-      return;
-    }
-    const newCourse = {
-      id: `CR00${courses.length + 1}`,
-      ...formData,
-      status: '已安排'
-    };
-    setCourses([...courses, newCourse]);
-    setIsAddModalOpen(false);
-    setFormData({ name: '', type: '理论课', className: '', teacher: '', time: '', location: '' });
-    showToast('课程添加成功', 'success');
-  };
-
-  const columns = [
-    { header: '课程名称', accessor: 'name' },
-    { header: '类型', accessor: 'type' },
-    { header: '班级', accessor: 'className' },
-    { header: '教师', accessor: 'teacher' },
-    { header: '时间', accessor: 'time' },
-    { header: '地点', accessor: 'location' },
-    { header: '状态', render: (row: any) => <StatusBadge status={row.status} /> },
-  ];
-
-  const renderActions = (row: any) => (
-    <div className="flex justify-end space-x-2">
-      <button className="text-indigo-600 hover:text-indigo-900" title="修改"><Edit size={18} /></button>
-      <button onClick={() => handleDelete(row.id)} className="text-red-600 hover:text-red-900" title="删除"><Trash2 size={18} /></button>
-    </div>
-  );
-
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="flex space-x-4 flex-1">
-          <SearchBar placeholder="搜索课程名称" value={searchTerm} onChange={setSearchTerm} />
+    <div className="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium text-gray-700">考试状态:</label>
           <select 
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="block w-40 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
+            value={examStatus} 
+            onChange={e => setExamStatus(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white min-w-[120px]"
           >
-            <option>所有类型</option>
-            <option>理论课</option>
-            <option>实训课</option>
-          </select>
-          <select 
-            value={teacherFilter}
-            onChange={(e) => setTeacherFilter(e.target.value)}
-            className="block w-40 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
-          >
-            <option>所有教师</option>
-            <option>李晓华</option>
-            <option>王伟</option>
+            <option value="全部">全部</option>
           </select>
         </div>
-        <div className="flex space-x-3">
-          <ActionButton icon={Calendar} label="日历视图" variant="secondary" onClick={() => showToast('切换到日历视图')} />
-          <ActionButton icon={Plus} label="添加课程" onClick={() => setIsAddModalOpen(true)} />
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium text-gray-700">课程类型:</label>
+          <select 
+            value={courseType} 
+            onChange={e => setCourseType(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white min-w-[120px]"
+          >
+            <option value="全部">全部</option>
+          </select>
+        </div>
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium text-gray-700">课程状态:</label>
+          <select 
+            value={courseStatus} 
+            onChange={e => setCourseStatus(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white min-w-[120px]"
+          >
+            <option value="全部">全部</option>
+          </select>
+        </div>
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium text-gray-700">老师:</label>
+          <select 
+            value={teacher} 
+            onChange={e => setTeacher(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white min-w-[120px]"
+          >
+            <option value="全部">全部</option>
+          </select>
+        </div>
+        <button onClick={handleSearch} className="bg-blue-500 text-white px-4 py-1.5 rounded text-sm flex items-center hover:bg-blue-600 transition-colors">
+          <Search size={14} className="mr-1" /> 搜索
+        </button>
+        <button onClick={handleClear} className="text-blue-500 text-sm hover:text-blue-700 transition-colors">
+          清除所有筛选
+        </button>
+      </div>
+
+      {/* Second row filters & Legend */}
+      <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium text-gray-700">实训周期:</label>
+          <div className="relative">
+            <input 
+              type="month" 
+              value={period}
+              onChange={e => setPeriod(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white min-w-[150px]"
+            />
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-4 text-sm">
+          <div className="flex items-center"><span className="w-4 h-4 bg-teal-400 rounded-sm mr-2"></span>课程已教学</div>
+          <div className="flex items-center"><span className="w-4 h-4 bg-gray-200 rounded-sm mr-2"></span>课程待教学</div>
+          <div className="flex items-center"><span className="w-4 h-4 bg-indigo-500 rounded-sm mr-2"></span>待考试</div>
+          <div className="flex items-center"><span className="w-4 h-4 bg-orange-300 rounded-sm mr-2"></span>考试中</div>
+          <div className="flex items-center"><span className="w-4 h-4 bg-red-500 rounded-sm mr-2"></span>考试结束</div>
         </div>
       </div>
-      <Table columns={columns} data={filteredCourses} actions={renderActions} />
-      
-      <Modal title="添加课程" isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSubmit={handleAdd}>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">课程名称</label>
-            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="例如: HTML/CSS基础" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">课程类型</label>
-              <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                <option value="理论课">理论课</option>
-                <option value="实训课">实训课</option>
-              </select>
+
+      {/* Calendar Grid */}
+      <div className="border border-gray-200 rounded-sm overflow-hidden">
+        <div className="grid grid-cols-7 bg-gray-100 border-b border-gray-200">
+          {daysOfWeek.map((day, index) => (
+            <div key={day} className={`py-3 text-center text-sm font-medium ${index >= 5 ? 'text-red-500' : 'text-gray-700'} border-r border-gray-200 last:border-r-0`}>
+              {day}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">班级</label>
-              <input type="text" value={formData.className} onChange={e => setFormData({...formData, className: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入班级名称" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">授课教师</label>
-            <input type="text" value={formData.teacher} onChange={e => setFormData({...formData, teacher: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入教师姓名" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">时间</label>
-              <input type="text" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="例如: 2023-10-15 09:00" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">地点</label>
-              <input type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="例如: 教学楼A栋101" />
-            </div>
-          </div>
+          ))}
         </div>
-      </Modal>
+        <div className="grid grid-cols-7 auto-rows-[120px]">
+          {calendarDays.map((day, index) => (
+            <div key={index} className="border-r border-b border-gray-200 last:border-r-0 relative p-1">
+              {day && (
+                <>
+                  <div className="text-center font-bold text-gray-800 mb-1">{day.date}</div>
+                  {day.events.map((event, i) => (
+                    <div key={i} className="bg-gray-100 text-xs p-1.5 rounded-sm mb-1">
+                      <div className="text-gray-700">课节安排：{event.time}</div>
+                      <div className="text-gray-700">实训班级：{event.class}</div>
+                      {event.more > 0 && <div className="text-gray-500 truncate">同时段还有{event.more}节...</div>}
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1449,8 +1950,141 @@ function GradeManagement() {
 
 // --- Main App Component ---
 
+function Login({ onLogin }: { onLogin: () => void }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaCode, setCaptchaCode] = useState('');
+
+  const generateCaptcha = () => {
+    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let code = '';
+    for (let i = 0; i < 4; i++) {
+      code += chars[Math.floor(Math.random() * chars.length)];
+    }
+    setCaptchaCode(code);
+  };
+
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username || !password) {
+      showToast('请填写账号和密码', 'error');
+      return;
+    }
+    // 取消验证码的实际验证功能
+    // if (captchaInput.toLowerCase() !== captchaCode.toLowerCase()) {
+    //   showToast('验证码错误', 'error');
+    //   generateCaptcha();
+    //   setCaptchaInput('');
+    //   return;
+    // }
+    showToast('登录成功', 'success');
+    onLogin();
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <GlobalOverlays />
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="flex justify-center">
+          <div className="w-16 h-16 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+            <BookOpen className="w-10 h-10 text-white" />
+          </div>
+        </div>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          金隅实训系统
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          请输入您的账号和密码进行登录
+        </p>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                账号
+              </label>
+              <div className="mt-1">
+                <input
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  placeholder="请输入账号"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                密码
+              </label>
+              <div className="mt-1">
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  placeholder="请输入密码"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                验证码
+              </label>
+              <div className="mt-1 flex space-x-2">
+                <input
+                  type="text"
+                  required
+                  value={captchaInput}
+                  onChange={(e) => setCaptchaInput(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  placeholder="请输入验证码"
+                />
+                <div 
+                  className="flex-shrink-0 w-24 bg-gray-100 flex items-center justify-center rounded-md border border-gray-300 cursor-pointer select-none hover:bg-gray-200 transition-colors"
+                  onClick={generateCaptcha}
+                  title="点击刷新验证码"
+                >
+                  <span className="text-lg font-bold text-indigo-600 tracking-widest italic" style={{ textDecoration: 'line-through' }}>
+                    {captchaCode}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                登录
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  if (!isLoggedIn) {
+    return <Login onLogin={() => setIsLoggedIn(true)} />;
+  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -1459,7 +2093,7 @@ export default function App() {
       case 'student': return <StudentManagement />;
       case 'class': return <ClassManagement />;
       case 'training': return <TrainingManagement />;
-      case 'course': return <CourseSchedule />;
+      case 'course': return <TeachingCalendar />;
       case 'announcement': return <AnnouncementManagement />;
       case 'analysis': return <LearningAnalysis />;
       case 'assignment': return <AssignmentManagement />;
@@ -1497,7 +2131,7 @@ export default function App() {
     ],
     training: [
       { id: 'training', label: '实训管理' },
-      { id: 'course', label: '课程安排' },
+      { id: 'course', label: '教学日历' },
       { id: 'announcement', label: '实训公告' },
       { id: 'analysis', label: '学情分析' },
     ],
@@ -1549,7 +2183,16 @@ export default function App() {
                 管
               </div>
             </div>
-            <button className="text-gray-400 hover:text-gray-600 transition-colors" title="退出登录">
+            <button 
+              onClick={() => {
+                showConfirm('确定要退出登录吗？', () => {
+                  setIsLoggedIn(false);
+                  showToast('已退出登录', 'success');
+                });
+              }}
+              className="text-gray-400 hover:text-gray-600 transition-colors" 
+              title="退出登录"
+            >
               <LogOut size={20} />
             </button>
           </div>
