@@ -1427,18 +1427,53 @@ function TeachingCalendar() {
   
   // Mock calendar data for March 2026
   // March 1st 2026 is a Sunday (index 6)
+  const getEventsForDay = (dayNumber: number) => {
+    switch (dayNumber) {
+      case 2:
+        return [{ time: '上午第三节', class: '电商', type: '课程待教学', more: 1 }];
+      case 3:
+        return [{ time: '下午第一节', class: '计算机二班', type: '课程已教学', more: 0 }];
+      case 5:
+        return [{ time: '上午第一节', class: '电商', type: '待考试', more: 0 }];
+      case 10:
+        return [{ time: '全天', class: '计算机二班', type: '考试中', more: 0 }];
+      case 12:
+        return [{ time: '下午第二节', class: '电商', type: '考试结束', more: 0 }];
+      case 15:
+        return [
+          { time: '上午第二节', class: '电商', type: '课程已教学', more: 0 },
+          { time: '下午第三节', class: '计算机二班', type: '课程待教学', more: 0 }
+        ];
+      case 20:
+        return [{ time: '上午第四节', class: '电商', type: '待考试', more: 2 }];
+      case 25:
+        return [{ time: '下午第一节', class: '计算机二班', type: '考试中', more: 0 }];
+      default:
+        return [];
+    }
+  };
+
   const calendarDays = Array.from({ length: 35 }, (_, i) => {
     const dayNumber = i - 5; // offset so 1 is on Sunday
     if (dayNumber > 0 && dayNumber <= 31) {
       return {
         date: dayNumber,
-        events: dayNumber === 2 ? [
-          { time: '上午第三节', class: '电商', more: 1 }
-        ] : []
+        events: getEventsForDay(dayNumber)
       };
     }
     return null;
   });
+
+  const getEventStyle = (type: string) => {
+    switch (type) {
+      case '课程已教学': return 'bg-teal-50 border-l-4 border-teal-400';
+      case '课程待教学': return 'bg-gray-50 border-l-4 border-gray-300';
+      case '待考试': return 'bg-indigo-50 border-l-4 border-indigo-500';
+      case '考试中': return 'bg-orange-50 border-l-4 border-orange-400';
+      case '考试结束': return 'bg-red-50 border-l-4 border-red-500';
+      default: return 'bg-gray-50 border-l-4 border-gray-300';
+    }
+  };
 
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -1526,15 +1561,16 @@ function TeachingCalendar() {
         </div>
         <div className="grid grid-cols-7 auto-rows-[120px]">
           {calendarDays.map((day, index) => (
-            <div key={index} className="border-r border-b border-gray-200 last:border-r-0 relative p-1">
+            <div key={index} className="border-r border-b border-gray-200 last:border-r-0 relative p-1 overflow-y-auto">
               {day && (
                 <>
                   <div className="text-center font-bold text-gray-800 mb-1">{day.date}</div>
                   {day.events.map((event, i) => (
-                    <div key={i} className="bg-gray-100 text-xs p-1.5 rounded-sm mb-1">
-                      <div className="text-gray-700">课节安排：{event.time}</div>
-                      <div className="text-gray-700">实训班级：{event.class}</div>
-                      {event.more > 0 && <div className="text-gray-500 truncate">同时段还有{event.more}节...</div>}
+                    <div key={i} className={`text-xs p-1.5 rounded-r-sm mb-1 ${getEventStyle(event.type)}`}>
+                      <div className="text-gray-800 font-medium truncate mb-0.5">{event.type}</div>
+                      <div className="text-gray-600 truncate">课节：{event.time}</div>
+                      <div className="text-gray-600 truncate">班级：{event.class}</div>
+                      {event.more > 0 && <div className="text-gray-400 mt-0.5 truncate">同时段还有{event.more}节...</div>}
                     </div>
                   ))}
                 </>
