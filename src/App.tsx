@@ -24,7 +24,9 @@ import {
   CheckCircle,
   Info,
   AlertTriangle,
-  BarChart2
+  BarChart2,
+  MinusCircle,
+  PlusCircle
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -243,30 +245,38 @@ function Table({ columns, data, actions, selectable, selectedIds = [], onSelecti
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {data.map((row, i) => (
-            <tr key={i} className="hover:bg-gray-50">
-              {selectable && (
-                <td className="px-6 py-4 whitespace-nowrap w-12">
-                  <input 
-                    type="checkbox" 
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    checked={selectedIds.includes(row[idAccessor])}
-                    onChange={(e) => handleSelectRow(row[idAccessor], e.target.checked)}
-                  />
-                </td>
-              )}
-              {columns.map((col, j) => (
-                <td key={j} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {col.render ? col.render(row) : row[col.accessor]}
-                </td>
-              ))}
-              {actions && (
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  {actions(row)}
-                </td>
-              )}
+          {data.length === 0 ? (
+            <tr>
+              <td colSpan={columns.length + (selectable ? 1 : 0) + (actions ? 1 : 0)} className="px-6 py-8 text-center text-gray-500 text-sm">
+                暂无数据
+              </td>
             </tr>
-          ))}
+          ) : (
+            data.map((row, i) => (
+              <tr key={i} className="hover:bg-gray-50">
+                {selectable && (
+                  <td className="px-6 py-4 whitespace-nowrap w-12">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      checked={selectedIds.includes(row[idAccessor])}
+                      onChange={(e) => handleSelectRow(row[idAccessor], e.target.checked)}
+                    />
+                  </td>
+                )}
+                {columns.map((col, j) => (
+                  <td key={j} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {col.render ? col.render(row) : row[col.accessor]}
+                  </td>
+                ))}
+                {actions && (
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    {actions(row)}
+                  </td>
+                )}
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
@@ -287,11 +297,19 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function Modal({ title, isOpen, onClose, children, onSubmit }: { title: string, isOpen: boolean, onClose: () => void, children: React.ReactNode, onSubmit: () => void }) {
+function Modal({ title, isOpen, onClose, children, onSubmit, size = 'md' }: { title: string, isOpen: boolean, onClose: () => void, children: React.ReactNode, onSubmit: () => void, size?: 'sm' | 'md' | 'lg' | 'xl' }) {
   if (!isOpen) return null;
+  
+  const sizeClasses = {
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-3xl',
+    xl: 'max-w-5xl'
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className={`bg-white rounded-lg shadow-xl w-full mx-4 overflow-hidden flex flex-col max-h-[90vh] ${sizeClasses[size]}`}>
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center shrink-0">
           <h3 className="text-lg font-medium text-gray-900">{title}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -1229,15 +1247,36 @@ function TrainingManagement() {
   const [periodFilter, setPeriodFilter] = useState('');
   const [classFilter, setClassFilter] = useState('全部');
   const [teacherFilter, setTeacherFilter] = useState('全部');
+  
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', period: '', className: '', lessonCount: 0, teacher: '' });
+  const [showAddExam, setShowAddExam] = useState(false);
+  
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({ id: '', name: '', period: '', className: '', lessonCount: 0, teacher: '' });
+  const [showEditExam, setShowEditExam] = useState(false);
+
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [configCourseName, setConfigCourseName] = useState('');
+  const [courseConfigData, setCourseConfigData] = useState([
+    { id: 1, topic: '网络营销概述', hours: 0, teacher: '', date: '', time: '' },
+    { id: 2, topic: '智能营销——概述及营销分类(理论知识)', hours: 0, teacher: '', date: '', time: '' },
+    { id: 3, topic: '系统登录、后台展示、AI测评', hours: 0, teacher: '', date: '', time: '' }
+  ]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const filteredTrainings = trainings.filter(t => {
     const matchSearch = t.name.includes(searchTerm);
     const matchClass = classFilter === '全部' || t.className === classFilter;
     const matchTeacher = teacherFilter === '全部' || t.teacher === teacherFilter;
-    return matchSearch && matchClass && matchTeacher;
+    const matchPeriod = !periodFilter || t.period.includes(periodFilter);
+    return matchSearch && matchClass && matchTeacher && matchPeriod;
   });
+
+  const totalPages = Math.ceil(filteredTrainings.length / itemsPerPage);
+  const paginatedTrainings = filteredTrainings.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleDelete = (id: string) => {
     showConfirm('确定要删除该实训吗？', () => {
@@ -1259,7 +1298,24 @@ function TrainingManagement() {
     setTrainings([...trainings, newTraining]);
     setIsAddModalOpen(false);
     setFormData({ name: '', period: '', className: '', lessonCount: 0, teacher: '' });
+    setShowAddExam(false);
     showToast('实训添加成功', 'success');
+  };
+
+  const handleEditClick = (row: any) => {
+    setEditFormData({ ...row });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = () => {
+    if (!editFormData.name || !editFormData.period || !editFormData.className || !editFormData.teacher) {
+      showToast('请填写完整信息', 'error');
+      return;
+    }
+    setTrainings(trainings.map(t => t.id === editFormData.id ? { ...t, ...editFormData } : t));
+    setIsEditModalOpen(false);
+    setShowEditExam(false);
+    showToast('实训修改成功', 'success');
   };
 
   const handleClearFilters = () => {
@@ -1267,6 +1323,7 @@ function TrainingManagement() {
     setPeriodFilter('');
     setClassFilter('全部');
     setTeacherFilter('全部');
+    setCurrentPage(1);
   };
 
   const columns = [
@@ -1291,7 +1348,7 @@ function TrainingManagement() {
   const renderActions = (row: any) => (
     <div className="flex justify-end space-x-3 text-sm">
       <button onClick={() => showToast(`查看实训 ${row.name}`)} className="text-indigo-600 hover:text-indigo-900">查看</button>
-      <button onClick={() => showToast(`修改实训 ${row.name}`)} className="text-green-600 hover:text-green-900">修改</button>
+      <button onClick={() => handleEditClick(row)} className="text-green-600 hover:text-green-900">修改</button>
       <button onClick={() => showToast(`编辑考试信息 ${row.name}`)} className="text-blue-600 hover:text-blue-900">编辑考试信息</button>
       <button onClick={() => showToast(`添加作业 ${row.name}`)} className="text-indigo-600 hover:text-indigo-900">添加作业</button>
       <button onClick={() => handleDelete(row.id)} className="text-red-600 hover:text-red-900">删除</button>
@@ -1318,7 +1375,7 @@ function TrainingManagement() {
                 placeholder="-" 
                 className="w-full text-sm focus:outline-none"
                 value={periodFilter}
-                onChange={e => setPeriodFilter(e.target.value)}
+                onChange={e => { setPeriodFilter(e.target.value); setCurrentPage(1); }}
               />
             </div>
           </div>
@@ -1327,7 +1384,7 @@ function TrainingManagement() {
             <label className="text-sm text-gray-700 whitespace-nowrap">实训班级:</label>
             <select 
               value={classFilter}
-              onChange={e => setClassFilter(e.target.value)}
+              onChange={e => { setClassFilter(e.target.value); setCurrentPage(1); }}
               className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white w-32"
             >
               <option value="全部">全部</option>
@@ -1340,7 +1397,7 @@ function TrainingManagement() {
             <label className="text-sm text-gray-700 whitespace-nowrap">任课教师:</label>
             <select 
               value={teacherFilter}
-              onChange={e => setTeacherFilter(e.target.value)}
+              onChange={e => { setTeacherFilter(e.target.value); setCurrentPage(1); }}
               className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white w-32"
             >
               <option value="全部">全部</option>
@@ -1354,7 +1411,7 @@ function TrainingManagement() {
               type="text" 
               placeholder="请输入实训名称" 
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="border border-gray-300 rounded-l px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 w-40"
             />
             <button className="bg-indigo-600 text-white px-3 py-1.5 rounded-r hover:bg-indigo-700 transition-colors border border-indigo-600">
@@ -1372,32 +1429,455 @@ function TrainingManagement() {
         </div>
       </div>
 
-      <Table columns={columns} data={filteredTrainings} actions={renderActions} />
+      <Table columns={columns} data={paginatedTrainings} actions={renderActions} />
       
-      <Modal title="添加实训计划" isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSubmit={handleAdd}>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">实训名称</label>
-            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="例如: 选品" />
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+          <div className="text-sm text-gray-500">
+            显示 {(currentPage - 1) * itemsPerPage + 1} 到 {Math.min(currentPage * itemsPerPage, filteredTrainings.length)} 条，共 {filteredTrainings.length} 条记录
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">实训周期</label>
-            <input type="text" value={formData.period} onChange={e => setFormData({...formData, period: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="例如: 2026-03-03-2026-03-07" />
+          <div className="flex space-x-1">
+            <button 
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 border rounded text-sm ${currentPage === 1 ? 'border-gray-200 text-gray-400 bg-gray-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+            >
+              上一页
+            </button>
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button 
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-3 py-1 border rounded text-sm ${currentPage === i + 1 ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button 
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1 border rounded text-sm ${currentPage === totalPages ? 'border-gray-200 text-gray-400 bg-gray-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+            >
+              下一页
+            </button>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">实训班级</label>
-              <input type="text" value={formData.className} onChange={e => setFormData({...formData, className: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入班级名称" />
+        </div>
+      )}
+
+      <Modal title="添加实训计划" isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSubmit={handleAdd} size="lg">
+        <div className="space-y-6">
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训名称:</label>
+            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-md" placeholder="请输入课程名称" />
+          </div>
+          
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训班级:</label>
+            <div className="flex items-center space-x-2 max-w-md">
+              <select value={formData.className} onChange={e => setFormData({...formData, className: e.target.value})} className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500">
+                <option value="">请选择上课班级</option>
+                <option value="电商">电商</option>
+                <option value="计算机二班">计算机二班</option>
+              </select>
+              <button className="text-blue-500 hover:text-blue-700 text-sm whitespace-nowrap flex items-center">
+                <Plus size={14} className="mr-1" /> 添加实训班级
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">课时数量</label>
-              <input type="number" value={formData.lessonCount} onChange={e => setFormData({...formData, lessonCount: parseInt(e.target.value) || 0})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="0" />
+          </div>
+
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训周期:</label>
+            <div className="flex items-center border border-gray-300 rounded-md px-3 py-2 max-w-md bg-white">
+              <Calendar size={16} className="text-gray-400 mr-2" />
+              <input type="text" value={formData.period} onChange={e => setFormData({...formData, period: e.target.value})} className="w-full focus:outline-none text-sm" placeholder="-" />
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">任课教师</label>
-            <input type="text" value={formData.teacher} onChange={e => setFormData({...formData, teacher: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入教师姓名" />
+
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>上课地点:</label>
+            <input type="text" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-md" placeholder="请输入上课地点" />
           </div>
+
+          <div className="grid grid-cols-[100px_1fr] items-start gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right pt-2"><span className="text-red-500 mr-1">*</span>课程设定:</label>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-6">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="radio" name="courseType" className="text-blue-500 focus:ring-blue-500" defaultChecked />
+                  <span className="text-sm text-blue-500">国内版</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="radio" name="courseType" className="text-blue-500 focus:ring-blue-500" />
+                  <span className="text-sm text-gray-600">海外版</span>
+                </label>
+              </div>
+              
+              <div className="border border-gray-200 rounded-md overflow-hidden max-w-2xl">
+                <table className="min-w-full divide-y divide-gray-200 text-sm text-center">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 w-12"></th>
+                      <th className="px-4 py-3 font-medium text-gray-600">课程类型</th>
+                      <th className="px-4 py-3 font-medium text-gray-600">课时数量</th>
+                      <th className="px-4 py-3 font-medium text-gray-600">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {[
+                      { name: '智能网络营销概述', count: 3 },
+                      { name: '公共', count: 2 },
+                      { name: '海外建站', count: 10 },
+                      { name: '商机发现', count: 3 },
+                      { name: '主动营销', count: 2 },
+                      { name: '社媒营销', count: 2 },
+                      { name: '品牌建设', count: 9 },
+                      { name: '数据分析', count: 3 },
+                      { name: 'AI Box', count: 1 },
+                    ].map((course, idx) => (
+                      <tr key={idx}>
+                        <td className="px-4 py-3"><input type="checkbox" className="rounded border-gray-300" /></td>
+                        <td className="px-4 py-3 text-gray-700">{course.name}</td>
+                        <td className="px-4 py-3 text-gray-700">{course.count}</td>
+                        <td className="px-4 py-3"><button type="button" onClick={() => { setConfigCourseName(course.name); setIsConfigModalOpen(true); }} className="text-blue-500 hover:text-blue-700">配置</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div className="pl-[116px]">
+            {!showAddExam ? (
+              <button 
+                onClick={() => setShowAddExam(true)}
+                className="text-blue-500 hover:text-blue-700 text-sm flex items-center"
+              >
+                <Plus size={14} className="mr-1" /> 添加考试信息
+              </button>
+            ) : (
+              <div className="space-y-6 max-w-3xl pt-4">
+                <button 
+                  onClick={() => setShowAddExam(false)}
+                  className="text-blue-500 hover:text-blue-700 text-sm mb-2"
+                >
+                  放弃考试信息填写
+                </button>
+
+                <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                  <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>考试时间:</label>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center border border-gray-300 rounded-md px-3 py-2 bg-white w-40">
+                      <Calendar size={16} className="text-gray-400 mr-2" />
+                      <input type="text" className="w-full focus:outline-none text-sm text-gray-500" placeholder="请选择考试时间" />
+                    </div>
+                    <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                      <option>上午</option>
+                      <option>下午</option>
+                    </select>
+                    <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                      <option>第1节</option>
+                      <option>第2节</option>
+                    </select>
+                    <span className="text-gray-500">~</span>
+                    <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                      <option>上午</option>
+                      <option>下午</option>
+                    </select>
+                    <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                      <option>第1节</option>
+                      <option>第2节</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                  <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>考试时长:</label>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center border border-gray-300 rounded-md overflow-hidden bg-white w-32">
+                      <button className="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-r border-gray-300 text-gray-600">-</button>
+                      <input type="text" className="w-full text-center focus:outline-none text-sm py-2" defaultValue="90" />
+                      <button className="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 text-gray-600">+</button>
+                    </div>
+                    <span className="text-sm text-gray-700">分钟</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                  <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>监考老师:</label>
+                  <div className="flex items-center space-x-2">
+                    <select className="w-64 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                      <option>请选择监考老师</option>
+                    </select>
+                    <button className="text-blue-500 hover:text-blue-700 text-sm whitespace-nowrap flex items-center">
+                      <Plus size={14} className="mr-1" /> 添加教师
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                  <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>考试地点:</label>
+                  <input type="text" className="w-96 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm" placeholder="请输入考试地点" />
+                </div>
+
+                <div className="grid grid-cols-[100px_1fr] items-start gap-4">
+                  <label className="text-sm font-medium text-gray-700 text-right pt-2">综合得分:</label>
+                  <div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-700">
+                      <span>考试成绩 (分) *</span>
+                      <input type="text" className="w-16 border border-gray-300 rounded-md px-2 py-1.5 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500" defaultValue="70" />
+                      <span>% + 平时分 *</span>
+                      <input type="text" className="w-16 border border-gray-300 rounded-md px-2 py-1.5 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500" defaultValue="20" />
+                      <span>% + 考勤评分 *</span>
+                      <input type="text" className="w-16 border border-gray-300 rounded-md px-2 py-1.5 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500" defaultValue="10" />
+                      <span>%</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">综合得分将由考试成绩、平时分、考勤评分设定的对应计算比例最终计算得出</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      <Modal title="修改实训计划" isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSubmit={handleEditSubmit} size="lg">
+        <div className="space-y-6">
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训名称:</label>
+            <input type="text" value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-md" placeholder="请输入课程名称" />
+          </div>
+          
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训班级:</label>
+            <div className="flex items-center space-x-2 max-w-md">
+              <select value={editFormData.className} onChange={e => setEditFormData({...editFormData, className: e.target.value})} className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500">
+                <option value="">请选择上课班级</option>
+                <option value="电商">电商</option>
+                <option value="计算机二班">计算机二班</option>
+              </select>
+              <button className="text-blue-500 hover:text-blue-700 text-sm whitespace-nowrap flex items-center">
+                <Plus size={14} className="mr-1" /> 添加实训班级
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训周期:</label>
+            <div className="flex items-center border border-gray-300 rounded-md px-3 py-2 max-w-md bg-white">
+              <Calendar size={16} className="text-gray-400 mr-2" />
+              <input type="text" value={editFormData.period} onChange={e => setEditFormData({...editFormData, period: e.target.value})} className="w-full focus:outline-none text-sm" placeholder="-" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>上课地点:</label>
+            <input type="text" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-md" placeholder="请输入上课地点" />
+          </div>
+
+          <div className="grid grid-cols-[100px_1fr] items-start gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right pt-2"><span className="text-red-500 mr-1">*</span>课程设定:</label>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-6">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="radio" name="editCourseType" className="text-blue-500 focus:ring-blue-500" defaultChecked />
+                  <span className="text-sm text-blue-500">国内版</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input type="radio" name="editCourseType" className="text-blue-500 focus:ring-blue-500" />
+                  <span className="text-sm text-gray-600">海外版</span>
+                </label>
+              </div>
+              
+              <div className="border border-gray-200 rounded-md overflow-hidden max-w-2xl">
+                <table className="min-w-full divide-y divide-gray-200 text-sm text-center">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 w-12"></th>
+                      <th className="px-4 py-3 font-medium text-gray-600">课程类型</th>
+                      <th className="px-4 py-3 font-medium text-gray-600">课时数量</th>
+                      <th className="px-4 py-3 font-medium text-gray-600">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {[
+                      { name: '智能网络营销概述', count: 3 },
+                      { name: '公共', count: 2 },
+                      { name: '海外建站', count: 10 },
+                      { name: '商机发现', count: 3 },
+                      { name: '主动营销', count: 2 },
+                      { name: '社媒营销', count: 2 },
+                      { name: '品牌建设', count: 9 },
+                      { name: '数据分析', count: 3 },
+                      { name: 'AI Box', count: 1 },
+                    ].map((course, idx) => (
+                      <tr key={idx}>
+                        <td className="px-4 py-3"><input type="checkbox" className="rounded border-gray-300" defaultChecked={idx < 3} /></td>
+                        <td className="px-4 py-3 text-gray-700">{course.name}</td>
+                        <td className="px-4 py-3 text-gray-700">{course.count}</td>
+                        <td className="px-4 py-3"><button type="button" onClick={() => { setConfigCourseName(course.name); setIsConfigModalOpen(true); }} className="text-blue-500 hover:text-blue-700">配置</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div className="pl-[116px]">
+            {!showEditExam ? (
+              <button 
+                onClick={() => setShowEditExam(true)}
+                className="text-blue-500 hover:text-blue-700 text-sm flex items-center"
+              >
+                <Plus size={14} className="mr-1" /> 添加考试信息
+              </button>
+            ) : (
+              <div className="space-y-6 max-w-3xl pt-4">
+                <button 
+                  onClick={() => setShowEditExam(false)}
+                  className="text-blue-500 hover:text-blue-700 text-sm mb-2"
+                >
+                  放弃考试信息填写
+                </button>
+
+                <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                  <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>考试时间:</label>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center border border-gray-300 rounded-md px-3 py-2 bg-white w-40">
+                      <Calendar size={16} className="text-gray-400 mr-2" />
+                      <input type="text" className="w-full focus:outline-none text-sm text-gray-500" placeholder="请选择考试时间" />
+                    </div>
+                    <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                      <option>上午</option>
+                      <option>下午</option>
+                    </select>
+                    <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                      <option>第1节</option>
+                      <option>第2节</option>
+                    </select>
+                    <span className="text-gray-500">~</span>
+                    <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                      <option>上午</option>
+                      <option>下午</option>
+                    </select>
+                    <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                      <option>第1节</option>
+                      <option>第2节</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                  <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>考试时长:</label>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center border border-gray-300 rounded-md overflow-hidden bg-white w-32">
+                      <button className="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-r border-gray-300 text-gray-600">-</button>
+                      <input type="text" className="w-full text-center focus:outline-none text-sm py-2" defaultValue="90" />
+                      <button className="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 text-gray-600">+</button>
+                    </div>
+                    <span className="text-sm text-gray-700">分钟</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                  <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>监考老师:</label>
+                  <div className="flex items-center space-x-2">
+                    <select className="w-64 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                      <option>请选择监考老师</option>
+                    </select>
+                    <button className="text-blue-500 hover:text-blue-700 text-sm whitespace-nowrap flex items-center">
+                      <Plus size={14} className="mr-1" /> 添加教师
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                  <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>考试地点:</label>
+                  <input type="text" className="w-96 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm" placeholder="请输入考试地点" />
+                </div>
+
+                <div className="grid grid-cols-[100px_1fr] items-start gap-4">
+                  <label className="text-sm font-medium text-gray-700 text-right pt-2">综合得分:</label>
+                  <div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-700">
+                      <span>考试成绩 (分) *</span>
+                      <input type="text" className="w-16 border border-gray-300 rounded-md px-2 py-1.5 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500" defaultValue="70" />
+                      <span>% + 平时分 *</span>
+                      <input type="text" className="w-16 border border-gray-300 rounded-md px-2 py-1.5 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500" defaultValue="20" />
+                      <span>% + 考勤评分 *</span>
+                      <input type="text" className="w-16 border border-gray-300 rounded-md px-2 py-1.5 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500" defaultValue="10" />
+                      <span>%</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">综合得分将由考试成绩、平时分、考勤评分设定的对应计算比例最终计算得出</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      <Modal title="课程安排" isOpen={isConfigModalOpen} onClose={() => setIsConfigModalOpen(false)} onSubmit={() => { setIsConfigModalOpen(false); showToast('配置已保存', 'success'); }} size="xl">
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse border border-gray-200 text-sm text-center">
+            <thead className="bg-white">
+              <tr>
+                <th className="border border-gray-200 px-4 py-3 font-medium text-gray-600 w-32">课程类型</th>
+                <th className="border border-gray-200 px-4 py-3 font-medium text-gray-600">学习课题</th>
+                <th className="border border-gray-200 px-4 py-3 font-medium text-gray-600 w-16">课时</th>
+                <th className="border border-gray-200 px-4 py-3 font-medium text-gray-600 w-48">
+                  <div className="flex items-center justify-center">
+                    任课老师 <PlusCircle size={14} className="ml-1 text-blue-500 cursor-pointer" />
+                  </div>
+                </th>
+                <th className="border border-gray-200 px-4 py-3 font-medium text-gray-600">上课时间安排</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white">
+              {courseConfigData.map((row, index) => (
+                <tr key={row.id}>
+                  {index === 0 && (
+                    <td className="border border-gray-200 px-4 py-3 text-gray-700 font-medium" rowSpan={courseConfigData.length}>
+                      {configCourseName}
+                    </td>
+                  )}
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="flex items-center justify-center space-x-2">
+                      <input type="text" className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-1 focus:ring-indigo-500" value={row.topic} onChange={(e) => {
+                        const newData = [...courseConfigData];
+                        newData[index].topic = e.target.value;
+                        setCourseConfigData(newData);
+                      }} />
+                      <MinusCircle size={18} className="text-red-500 cursor-pointer shrink-0" />
+                      <PlusCircle size={18} className="text-green-500 cursor-pointer shrink-0" />
+                    </div>
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3 text-gray-700">
+                    {row.hours}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <select className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500">
+                      <option value="">请选择任课老师</option>
+                    </select>
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="flex items-center border border-gray-300 rounded-md px-3 py-2 bg-white w-32">
+                        <Calendar size={14} className="text-gray-400 mr-2 shrink-0" />
+                        <input type="text" className="w-full focus:outline-none text-sm text-gray-500" placeholder="选择日期" />
+                      </div>
+                      <select className="w-24 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500">
+                        <option value="">请选择</option>
+                      </select>
+                      <MinusCircle size={18} className="text-red-500 cursor-pointer shrink-0" />
+                      <PlusCircle size={18} className="text-green-500 cursor-pointer shrink-0" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </Modal>
     </div>
