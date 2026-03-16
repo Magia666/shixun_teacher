@@ -27,7 +27,9 @@ import {
   BarChart2,
   MinusCircle,
   PlusCircle,
-  ChevronDown
+  ChevronDown,
+  Layers,
+  ClipboardList
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -1276,6 +1278,12 @@ function TrainingManagement() {
     { id: 3, topic: '系统登录、后台展示、AI测评', hours: 1, teacher: '测试2', date: '2026-03-10', time: '上午第四节' }
   ]);
 
+  const [isEditExamModalOpen, setIsEditExamModalOpen] = useState(false);
+  const [editExamData, setEditExamData] = useState<any>(null);
+
+  const [isAddHomeworkModalOpen, setIsAddHomeworkModalOpen] = useState(false);
+  const [addHomeworkData, setAddHomeworkData] = useState<any>(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -1361,8 +1369,8 @@ function TrainingManagement() {
     <div className="flex justify-end space-x-3 text-sm">
       <button onClick={() => { setViewData(row); setIsViewModalOpen(true); }} className="text-indigo-600 hover:text-indigo-900">查看</button>
       <button onClick={() => handleEditClick(row)} className="text-green-600 hover:text-green-900">修改</button>
-      <button onClick={() => showToast(`编辑考试信息 ${row.name}`)} className="text-blue-600 hover:text-blue-900">编辑考试信息</button>
-      <button onClick={() => showToast(`添加作业 ${row.name}`)} className="text-indigo-600 hover:text-indigo-900">添加作业</button>
+      <button onClick={() => { setEditExamData(row); setIsEditExamModalOpen(true); }} className="text-blue-600 hover:text-blue-900">编辑考试信息</button>
+      <button onClick={() => { setAddHomeworkData(row); setIsAddHomeworkModalOpen(true); }} className="text-indigo-600 hover:text-indigo-900">添加作业</button>
       <button onClick={() => handleDelete(row.id)} className="text-red-600 hover:text-red-900">删除</button>
     </div>
   );
@@ -1999,6 +2007,169 @@ function TrainingManagement() {
               ))}
             </tbody>
           </table>
+        </div>
+      </Modal>
+
+      <Modal title="修改考试计划" isOpen={isEditExamModalOpen} onClose={() => setIsEditExamModalOpen(false)} onSubmit={() => { setIsEditExamModalOpen(false); showToast('考试计划已修改', 'success'); }} size="lg">
+        <div className="space-y-6">
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训计划:</label>
+            <select className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500">
+              <option>{editExamData?.name || '选品'}</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>考试时间:</label>
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center border border-gray-300 rounded-md px-3 py-2 bg-white w-40">
+                <Calendar size={14} className="text-gray-400 mr-2" />
+                <input type="text" className="w-full focus:outline-none text-sm" placeholder="请选择考试时间" />
+              </div>
+              <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                <option>上午</option>
+                <option>下午</option>
+              </select>
+              <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                <option>第1节</option>
+                <option>第2节</option>
+              </select>
+              <span className="text-gray-500">~</span>
+              <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                <option>上午</option>
+                <option>下午</option>
+              </select>
+              <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                <option>第1节</option>
+                <option>第2节</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>考试时长:</label>
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center border border-gray-300 rounded-md overflow-hidden bg-white w-32">
+                <button className="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-r border-gray-300 text-gray-600">-</button>
+                <input type="text" className="w-full text-center focus:outline-none text-sm py-2" defaultValue="90" />
+                <button className="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 text-gray-600">+</button>
+              </div>
+              <span className="text-sm text-gray-700">分钟</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>监考老师:</label>
+            <div className="flex items-center">
+              <select className="flex-1 border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                <option>请选择监考老师</option>
+              </select>
+              <button className="bg-white border-y border-r border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">添加教师</button>
+              <button className="bg-[#8A98B9] border border-[#8A98B9] rounded-r-md px-3 py-2 text-white hover:bg-[#7A88A9]"><Plus size={20} /></button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>考试地点:</label>
+            <input type="text" className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm" placeholder="请输入考试地点" />
+          </div>
+
+          <div className="grid grid-cols-[100px_1fr] items-start gap-4">
+            <label className="text-sm font-medium text-gray-700 text-right pt-2">综合得分:</label>
+            <div>
+              <div className="flex items-center space-x-2 text-sm text-gray-700">
+                <span>考试成绩 (分) *</span>
+                <input type="text" className="w-16 border border-gray-300 rounded-md px-2 py-1.5 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500" defaultValue="70" />
+                <span>% + 平时分 *</span>
+                <input type="text" className="w-16 border border-gray-300 rounded-md px-2 py-1.5 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500" defaultValue="20" />
+                <span>% + 考勤评分 *</span>
+                <input type="text" className="w-16 border border-gray-300 rounded-md px-2 py-1.5 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500" defaultValue="10" />
+                <span>%</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">综合得分将由考试成绩、平时分、考勤评分设定的对应计算比例最终计算得出</p>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal title="添加作业" isOpen={isAddHomeworkModalOpen} onClose={() => setIsAddHomeworkModalOpen(false)} onSubmit={() => { setIsAddHomeworkModalOpen(false); showToast('作业已保存', 'success'); }} size="3xl" submitText="保存">
+        <div className="space-y-8">
+          {/* 基本信息 */}
+          <div>
+            <div className="flex items-center space-x-2 mb-6 border-b border-gray-100 pb-2">
+              <Layers className="text-gray-500" size={24} />
+              <h3 className="text-lg font-medium text-gray-800">基本信息</h3>
+            </div>
+            
+            <div className="space-y-4 pl-8">
+              <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训班级:</label>
+                <select className="w-full max-w-md border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                  <option>{addHomeworkData?.className || '电商'}</option>
+                </select>
+              </div>
+              
+              <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训名称:</label>
+                <select className="w-full max-w-md border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                  <option>{addHomeworkData?.name || '选品'}</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-[100px_1fr] items-start gap-4">
+                <label className="text-sm font-medium text-gray-700 text-right pt-2"><span className="text-red-500 mr-1">*</span>学习课题:</label>
+                <div className="w-full max-w-md border border-gray-300 rounded-md p-2 bg-white min-h-[100px] flex flex-col gap-2">
+                  <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-3 py-1.5 text-sm text-gray-600">
+                    <span className="truncate">智能网络营销概述 / 网络营销概述 / 2026-03-02 / 上午第...</span>
+                    <X size={14} className="text-gray-400 cursor-pointer hover:text-gray-600 shrink-0 ml-2" />
+                  </div>
+                  <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-3 py-1.5 text-sm text-gray-600">
+                    <span className="truncate">智能网络营销概述 / 智能营销——概述及营销分类 (理论...</span>
+                    <X size={14} className="text-gray-400 cursor-pointer hover:text-gray-600 shrink-0 ml-2" />
+                  </div>
+                  <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-3 py-1.5 text-sm text-gray-600">
+                    <span className="truncate">智能网络营销概述 / 系统登录、后台展示、AI测评 / 2026-...</span>
+                    <X size={14} className="text-gray-400 cursor-pointer hover:text-gray-600 shrink-0 ml-2" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 作业详情 */}
+          <div>
+            <div className="flex items-center space-x-2 mb-6 border-b border-gray-100 pb-2">
+              <ClipboardList className="text-gray-500" size={24} />
+              <h3 className="text-lg font-medium text-gray-800">作业详情</h3>
+              <span className="text-sm text-gray-500 ml-4">以下作业标准均为默认值（数值类型作业标准不可低于默认值）</span>
+            </div>
+            
+            <div className="space-y-4 pl-8">
+              <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+                <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>作业1:</label>
+                <div className="flex items-center space-x-2">
+                  <select className="w-48 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                    <option>请选择</option>
+                  </select>
+                  <select className="w-48 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
+                    <option>请选择</option>
+                  </select>
+                  <PlusCircle size={18} className="text-blue-500 cursor-pointer" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-[100px_1fr] items-start gap-4">
+                <label className="text-sm font-medium text-gray-700 text-right pt-2"><span className="text-red-500 mr-1">*</span>本次作业要求:</label>
+                <div className="relative w-full max-w-2xl">
+                  <textarea 
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm min-h-[120px] resize-y" 
+                    placeholder="请输入本次作业要求"
+                  ></textarea>
+                  <div className="absolute bottom-2 right-2 text-xs text-gray-400">0/300</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </Modal>
     </div>
