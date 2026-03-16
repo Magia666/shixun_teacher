@@ -26,7 +26,8 @@ import {
   AlertTriangle,
   BarChart2,
   MinusCircle,
-  PlusCircle
+  PlusCircle,
+  ChevronDown
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -1264,6 +1265,17 @@ function TrainingManagement() {
     { id: 3, topic: '系统登录、后台展示、AI测评', hours: 0, teacher: '', date: '', time: '' }
   ]);
 
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewData, setViewData] = useState<any>(null);
+
+  const [isViewCourseConfigModalOpen, setIsViewCourseConfigModalOpen] = useState(false);
+  const [viewCourseConfigName, setViewCourseConfigName] = useState('');
+  const [viewCourseConfigData, setViewCourseConfigData] = useState([
+    { id: 1, topic: '网络营销概述', hours: 1, teacher: '测试', date: '2026-03-02', time: '上午第三节' },
+    { id: 2, topic: '智能营销——概述及营销分类(理论知识)', hours: 1, teacher: '测试2', date: '2026-03-02', time: '上午第二节' },
+    { id: 3, topic: '系统登录、后台展示、AI测评', hours: 1, teacher: '测试2', date: '2026-03-10', time: '上午第四节' }
+  ]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -1347,7 +1359,7 @@ function TrainingManagement() {
 
   const renderActions = (row: any) => (
     <div className="flex justify-end space-x-3 text-sm">
-      <button onClick={() => showToast(`查看实训 ${row.name}`)} className="text-indigo-600 hover:text-indigo-900">查看</button>
+      <button onClick={() => { setViewData(row); setIsViewModalOpen(true); }} className="text-indigo-600 hover:text-indigo-900">查看</button>
       <button onClick={() => handleEditClick(row)} className="text-green-600 hover:text-green-900">修改</button>
       <button onClick={() => showToast(`编辑考试信息 ${row.name}`)} className="text-blue-600 hover:text-blue-900">编辑考试信息</button>
       <button onClick={() => showToast(`添加作业 ${row.name}`)} className="text-indigo-600 hover:text-indigo-900">添加作业</button>
@@ -1872,6 +1884,115 @@ function TrainingManagement() {
                       </select>
                       <MinusCircle size={18} className="text-red-500 cursor-pointer shrink-0" />
                       <PlusCircle size={18} className="text-green-500 cursor-pointer shrink-0" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Modal>
+
+      <Modal title="查看实训计划" isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} size="lg" hideFooter>
+        {viewData && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+              <label className="text-sm font-medium text-gray-700 text-right">实训名称:</label>
+              <div className="text-sm text-gray-700">{viewData.name}</div>
+            </div>
+            
+            <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+              <label className="text-sm font-medium text-gray-700 text-right">实训班级:</label>
+              <div className="text-sm text-gray-700">{viewData.className}</div>
+            </div>
+
+            <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+              <label className="text-sm font-medium text-gray-700 text-right">实训周期:</label>
+              <div className="text-sm text-gray-700">{viewData.period}</div>
+            </div>
+
+            <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+              <label className="text-sm font-medium text-gray-700 text-right">上课地点:</label>
+              <div className="text-sm text-gray-700">11</div>
+            </div>
+
+            <div className="grid grid-cols-[100px_1fr] items-start gap-4">
+              <label className="text-sm font-medium text-gray-700 text-right mt-2">课程设定:</label>
+              <div className="border border-gray-200 rounded-md overflow-hidden">
+                <table className="min-w-full text-sm text-center">
+                  <thead className="bg-white border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 font-medium text-gray-500 border-r border-gray-200">课程类型</th>
+                      <th className="px-4 py-3 font-medium text-gray-500 border-r border-gray-200">课时数量</th>
+                      <th className="px-4 py-3 font-medium text-gray-500 border-r border-gray-200">上课周期</th>
+                      <th className="px-4 py-3 font-medium text-gray-500">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    <tr>
+                      <td className="px-4 py-3 text-gray-700 border-r border-gray-200">智能网络营销概述</td>
+                      <td className="px-4 py-3 text-gray-700 border-r border-gray-200">3</td>
+                      <td className="px-4 py-3 text-gray-700 border-r border-gray-200">2026-03-02~2026-03-10</td>
+                      <td className="px-4 py-3">
+                        <button onClick={() => { setViewCourseConfigName('智能网络营销概述'); setIsViewCourseConfigModalOpen(true); }} className="text-blue-500 hover:text-blue-700">查看</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal title="课程安排" isOpen={isViewCourseConfigModalOpen} onClose={() => setIsViewCourseConfigModalOpen(false)} size="xl" submitText="关闭" hideCancel onSubmit={() => setIsViewCourseConfigModalOpen(false)}>
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse border border-gray-200 text-sm text-center">
+            <thead className="bg-white">
+              <tr>
+                <th className="border border-gray-200 px-4 py-3 font-medium text-gray-600 w-32">课程类型</th>
+                <th className="border border-gray-200 px-4 py-3 font-medium text-gray-600">学习课题</th>
+                <th className="border border-gray-200 px-4 py-3 font-medium text-gray-600 w-16">课时</th>
+                <th className="border border-gray-200 px-4 py-3 font-medium text-gray-600 w-48">
+                  <div className="flex items-center justify-center">
+                    任课老师 <PlusCircle size={14} className="ml-1 text-blue-500 cursor-pointer" />
+                  </div>
+                </th>
+                <th className="border border-gray-200 px-4 py-3 font-medium text-gray-600">上课时间安排</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white">
+              {viewCourseConfigData.map((row, index) => (
+                <tr key={row.id}>
+                  {index === 0 && (
+                    <td className="border border-gray-200 px-4 py-3 text-gray-700 font-medium" rowSpan={viewCourseConfigData.length}>
+                      {viewCourseConfigName}
+                    </td>
+                  )}
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="border border-gray-200 rounded-md px-3 py-2 bg-gray-50 text-gray-500 text-left">
+                      {row.topic}
+                    </div>
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3 text-gray-700">
+                    {row.hours}
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="flex items-center justify-between border border-gray-200 rounded-md px-3 py-2 bg-gray-50 text-gray-500">
+                      <span>{row.teacher}</span>
+                      <ChevronDown size={14} className="text-gray-400" />
+                    </div>
+                  </td>
+                  <td className="border border-gray-200 px-4 py-3">
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="flex items-center border border-gray-200 rounded-md px-3 py-2 bg-gray-50 w-32 text-gray-500">
+                        <Calendar size={14} className="text-gray-400 mr-2 shrink-0" />
+                        <span>{row.date}</span>
+                      </div>
+                      <div className="flex items-center justify-between border border-gray-200 rounded-md px-3 py-2 bg-gray-50 w-24 text-gray-500">
+                        <span>{row.time}</span>
+                        <ChevronDown size={14} className="text-gray-400" />
+                      </div>
                     </div>
                   </td>
                 </tr>
