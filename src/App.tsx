@@ -3014,8 +3014,9 @@ export default function App() {
   const getTopLevelTab = () => {
     if (['dashboard'].includes(activeTab)) return 'dashboard';
     if (['teacher', 'student', 'class'].includes(activeTab)) return 'education';
-    if (['training', 'course', 'announcement', 'analysis'].includes(activeTab)) return 'training';
+    if (['training', 'course', 'announcement'].includes(activeTab)) return 'training';
     if (['assignment', 'exam', 'grade'].includes(activeTab)) return 'exam';
+    if (['analysis'].includes(activeTab)) return 'analysis';
     if (['domain'].includes(activeTab)) return 'domain';
     return 'dashboard';
   };
@@ -3027,6 +3028,7 @@ export default function App() {
     { id: 'education', label: '教务中心', icon: Users, defaultSub: 'teacher' },
     { id: 'training', label: '实训任务', icon: BookOpen, defaultSub: 'training' },
     { id: 'exam', label: '作业考试', icon: FileEdit, defaultSub: 'assignment' },
+    { id: 'analysis', label: '学情分析', icon: BarChart2, defaultSub: 'analysis' },
     { id: 'domain', label: '域名管理', icon: Globe, defaultSub: 'domain' },
   ];
 
@@ -3040,7 +3042,6 @@ export default function App() {
       { id: 'course', label: '教学日历' },
       { id: 'training', label: '实训管理' },
       { id: 'announcement', label: '实训公告' },
-      { id: 'analysis', label: '学情分析' },
     ],
     exam: [
       { id: 'assignment', label: '作业管理' },
