@@ -31,7 +31,7 @@ import {
   Layers,
   ClipboardList
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
 
 // --- Custom Toast & Confirm (Iframe Safe) ---
 
@@ -2538,6 +2538,85 @@ function LearningAnalysis() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h4 className="text-base font-medium text-gray-900 mb-6">周平均成绩趋势</h4>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={[
+                    { name: '第1周', score: 78 },
+                    { name: '第2周', score: 82 },
+                    { name: '第3周', score: 80 },
+                    { name: '第4周', score: 85 },
+                    { name: '第5周', score: 88 },
+                    { name: '第6周', score: 86 },
+                  ]}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                    <YAxis domain={[60, 100]} axisLine={false} tickLine={false} />
+                    <RechartsTooltip />
+                    <Line type="monotone" dataKey="score" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h4 className="text-base font-medium text-gray-900 mb-6">需关注学生名单</h4>
+              <div className="overflow-y-auto h-72 pr-2">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">姓名</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">学号</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">近期表现</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">建议</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {[
+                      { name: '张三', id: '2023001', issue: '连续两次作业未交', advice: '约谈提醒' },
+                      { name: '李四', id: '2023015', issue: '近期测验不及格', advice: '课后辅导' },
+                      { name: '王五', id: '2023022', issue: '出勤率低于80%', advice: '联系辅导员' },
+                      { name: '赵六', id: '2023034', issue: '课堂互动少', advice: '课堂多提问' },
+                      { name: '陈七', id: '2023041', issue: '作业抄袭嫌疑', advice: '核实情况' },
+                    ].map((student, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{student.name}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{student.id}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-red-500">{student.issue}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-indigo-600 cursor-pointer hover:underline">{student.advice}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <h4 className="text-base font-medium text-gray-900 mb-6">各课题作业完成率</h4>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={[
+                  { name: '课题1', rate: 95 },
+                  { name: '课题2', rate: 92 },
+                  { name: '课题3', rate: 88 },
+                  { name: '课题4', rate: 85 },
+                  { name: '课题5', rate: 90 },
+                  { name: '课题6', rate: 94 },
+                  { name: '课题7', rate: 96 },
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 100]} axisLine={false} tickLine={false} />
+                  <RechartsTooltip />
+                  <Area type="monotone" dataKey="rate" stroke="#3b82f6" fill="#93c5fd" fillOpacity={0.3} />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
