@@ -3026,7 +3026,7 @@ export default function App() {
   const topNavItems = [
     { id: 'dashboard', label: '系统首页', icon: LayoutDashboard, defaultSub: 'dashboard' },
     { id: 'education', label: '教务中心', icon: Users, defaultSub: 'teacher' },
-    { id: 'training', label: '实训任务', icon: BookOpen, defaultSub: 'training' },
+    { id: 'training', label: '实训任务', icon: BookOpen, defaultSub: 'course' },
     { id: 'exam', label: '作业考试', icon: FileEdit, defaultSub: 'assignment' },
     { id: 'analysis', label: '学情分析', icon: BarChart2, defaultSub: 'analysis' },
     { id: 'domain', label: '域名管理', icon: Globe, defaultSub: 'domain' },
