@@ -1,34 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import {
-  LayoutDashboard,
   Users,
-  GraduationCap,
   BookOpen,
   Calendar,
   FileText,
-  FileEdit,
-  Award,
-  LogOut,
-  Plus,
-  Search,
-  Download,
-  Upload,
-  Edit,
-  Trash2,
-  Ban,
-  ChevronRight,
-  HelpCircle,
-  MoreHorizontal,
   Globe,
-  X,
-  CheckCircle,
-  Info,
-  AlertTriangle,
-  BarChart2,
-  MinusCircle,
-  PlusCircle,
-  ChevronDown,
-  Layers,
+  FileEdit, 
+  Award, 
+  LogOut, 
+  Plus, 
+  Search, 
+  Download, 
+  Upload, 
+  Edit, 
+  Trash2, 
+  Ban, 
+  ChevronRight, 
+  HelpCircle, 
+  MoreHorizontal, 
+  X, 
+  CheckCircle, 
+  Info, 
+  AlertTriangle, 
+  BarChart2, 
+  MinusCircle, 
+  PlusCircle, 
+  ChevronDown, 
+  Layers, 
   ClipboardList
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
@@ -139,24 +137,24 @@ let initialClasses = [
   { id: 'C002', name: '计算机二班', type: '计算机班', studentCount: 50, teacher: '王伟', counselor: '李四', date: '2023-09-02' },
 ];
 
-let initialTrainings = [
+let initialCoursePlans = [
   { id: 'TR001', name: '选品', period: '2026-03-03-2026-03-07', className: '电商', lessonCount: 3, teacher: '测试/测试2', progress: 0 },
-  { id: 'TR002', name: '前端开发基础实训', period: '2026-03-10-2026-03-20', className: '计算机二班', lessonCount: 10, teacher: '王伟', progress: 50 },
+  { id: 'TR002', name: '前端开发基础课程', period: '2026-03-10-2026-03-20', className: '计算机二班', lessonCount: 10, teacher: '王伟', progress: 50 },
 ];
 
-let initialCourses = [
+let initialCourseSessions = [
   { id: 'CR001', name: '电商平台规则解析', type: '理论课', className: '电商一班', teacher: '李晓华', time: '2023-10-15 09:00', location: '教学楼A栋101', status: '已安排' },
-  { id: 'CR002', name: 'HTML/CSS基础', type: '实训课', className: '计算机二班', teacher: '王伟', time: '2023-10-16 14:00', location: '机房B栋202', status: '已安排' },
+  { id: 'CR002', name: 'HTML/CSS基础', type: '课程课', className: '计算机二班', teacher: '王伟', time: '2023-10-16 14:00', location: '机房B栋202', status: '已安排' },
 ];
 
 let initialAssignments = [
-  { id: 'A001', title: '店铺装修方案设计', course: '双十一电商大促实训', teacher: '李晓华', deadline: '2023-10-20 23:59', status: '已批改' },
-  { id: 'A002', title: '个人主页切图练习', course: '前端开发基础实训', teacher: '王伟', deadline: '2023-10-25 23:59', status: '未提交' },
+  { id: 'A001', title: '店铺装修方案设计', course: '双十一电商大促课程', teacher: '李晓华', deadline: '2023-10-20 23:59', status: '已批改' },
+  { id: 'A002', title: '个人主页切图练习', course: '前端开发基础课程', teacher: '王伟', deadline: '2023-10-25 23:59', status: '未提交' },
 ];
 
 let initialAnnouncements = [
-  { id: 'AN001', title: '关于2023秋季实训周安排的通知', author: '教务处', date: '2023-10-10', type: '重要通知', status: '已发布' },
-  { id: 'AN002', title: '双十一电商大促实训动员大会', author: '李晓华', date: '2023-10-12', type: '实训活动', status: '已发布' },
+  { id: 'AN001', title: '关于2023秋季课程周安排的通知', author: '教务处', date: '2023-10-10', type: '重要通知', status: '已发布' },
+  { id: 'AN002', title: '双十一电商大促课程动员大会', author: '李晓华', date: '2023-10-12', type: '课程活动', status: '已发布' },
 ];
 
 let initialExams = [
@@ -165,9 +163,9 @@ let initialExams = [
 ];
 
 let initialGrades = [
-  { id: 'G001', studentName: '陈明', studentId: 'S2023001', course: '双十一电商大促实训', trainingGrade: 85, examGrade: 90, totalGrade: 88, rank: 5 },
-  { id: 'G002', studentName: '林悦', studentId: 'S2023002', course: '双十一电商大促实训', trainingGrade: 92, examGrade: 88, totalGrade: 90, rank: 2 },
-  { id: 'G003', studentName: '赵强', studentId: 'S2023003', course: '前端开发基础实训', trainingGrade: 78, examGrade: 82, totalGrade: 80, rank: 15 },
+  { id: 'G001', studentName: '陈明', studentId: 'S2023001', course: '双十一电商大促课程', courseGrade: 85, examGrade: 90, totalGrade: 88, rank: 5 },
+  { id: 'G002', studentName: '林悦', studentId: 'S2023002', course: '双十一电商大促课程', courseGrade: 92, examGrade: 88, totalGrade: 90, rank: 2 },
+  { id: 'G003', studentName: '赵强', studentId: 'S2023003', course: '前端开发基础课程', courseGrade: 78, examGrade: 82, totalGrade: 80, rank: 15 },
 ];
 
 let initialDomains = [
@@ -300,14 +298,15 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function Modal({ title, isOpen, onClose, children, onSubmit, size = 'md' }: { title: string, isOpen: boolean, onClose: () => void, children: React.ReactNode, onSubmit: () => void, size?: 'sm' | 'md' | 'lg' | 'xl' }) {
+function Modal({ title, isOpen, onClose, children, onSubmit, size = 'md', submitText = '确定', hideFooter = false, hideCancel = false }: { title: string, isOpen: boolean, onClose: () => void, children: React.ReactNode, onSubmit?: () => void, size?: 'sm' | 'md' | 'lg' | 'xl' | '3xl', submitText?: string, hideFooter?: boolean, hideCancel?: boolean }) {
   if (!isOpen) return null;
   
   const sizeClasses = {
     sm: 'max-w-sm',
     md: 'max-w-md',
     lg: 'max-w-3xl',
-    xl: 'max-w-5xl'
+    xl: 'max-w-5xl',
+    '3xl': 'max-w-7xl'
   };
 
   return (
@@ -322,14 +321,48 @@ function Modal({ title, isOpen, onClose, children, onSubmit, size = 'md' }: { ti
         <div className="p-6 overflow-y-auto">
           {children}
         </div>
-        <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3 border-t border-gray-200 shrink-0">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-            取消
-          </button>
-          <button onClick={onSubmit} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700">
-            确定
-          </button>
-        </div>
+        {!hideFooter && (
+          <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3 border-t border-gray-200 shrink-0">
+            {!hideCancel && (
+              <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                取消
+              </button>
+            )}
+            {onSubmit && (
+              <button onClick={onSubmit} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700">
+                {submitText}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DevNote({ message, type = 'note' }: { message: string, type?: 'note' | 'api' | 'todo' }) {
+  const styles = {
+    note: 'bg-blue-50 text-blue-700 border-blue-200',
+    api: 'bg-purple-50 text-purple-700 border-purple-200',
+    todo: 'bg-amber-50 text-amber-700 border-amber-200',
+  };
+  const labels = {
+    note: '开发说明',
+    api: '接口/数据',
+    todo: '待办流程',
+  };
+  
+  // Using Info icon for all since Terminal is not imported, wait, I will import Terminal.
+  // Actually, I can just use Info or Code or AlertCircle which are already imported or I can add Terminal.
+  // I'll use Info for note, Globe for api, AlertTriangle for todo to avoid needing new imports if possible.
+  const Icon = type === 'api' ? Globe : type === 'todo' ? AlertTriangle : Info;
+
+  return (
+    <div className={`flex items-start p-3 mb-4 text-sm border border-dashed rounded-md shadow-sm ${styles[type]}`}>
+      <Icon size={16} className="mr-2 mt-0.5 shrink-0 opacity-80" />
+      <div>
+        <span className="font-bold mr-2">[{labels[type]}]</span>
+        {message}
       </div>
     </div>
   );
@@ -403,18 +436,17 @@ function DomainManagement() {
 
   return (
     <div className="space-y-4">
+      <DevNote type="note" message="域名管理涉及 Nginx 配置或云服务商 API 联动，需确保后端有相应的自动化配置脚本。" />
       <div className="flex justify-between items-center">
         <SearchBar placeholder="搜索域名" value={searchTerm} onChange={setSearchTerm} />
-        <div className="flex space-x-3">
-          <ActionButton icon={Plus} label="绑定新域名" onClick={() => setIsAddModalOpen(true)} />
-        </div>
+        <ActionButton icon={Plus} label="绑定域名" onClick={() => setIsAddModalOpen(true)} />
       </div>
       <Table columns={columns} data={filteredDomains} actions={renderActions} />
       
-      <Modal title="绑定新域名" isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSubmit={handleAdd}>
+      <Modal title="绑定域名" isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSubmit={handleAdd}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">域名</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">域名地址</label>
             <input type="text" value={formData.domain} onChange={e => setFormData({...formData, domain: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="例如: edu.example.com" />
           </div>
           <div>
@@ -423,82 +455,6 @@ function DomainManagement() {
           </div>
         </div>
       </Modal>
-    </div>
-  );
-}
-
-function Dashboard() {
-  return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <h2 className="text-2xl font-bold text-gray-900">欢迎使用金隅实训系统</h2>
-        <p className="text-gray-500 mt-1">当前登录机构：深圳致学商科教育咨询有限公司</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center">
-          <div className="p-3 rounded-full bg-indigo-100 text-indigo-600 mr-4">
-            <BookOpen size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">历史完成实训</p>
-            <p className="text-2xl font-semibold text-gray-900">128</p>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center">
-          <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-            <LayoutDashboard size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">当前域名绑定个数</p>
-            <p className="text-2xl font-semibold text-gray-900">3</p>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center">
-          <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-            <Users size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">进行中实训</p>
-            <p className="text-2xl font-semibold text-gray-900">12</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">教师端使用流程</h3>
-        <div className="flex items-center justify-between max-w-4xl mx-auto py-8">
-          {['添加学生', '添加教师', '添加班级', '添加实训', '课程/考试计划', '完成实训'].map((step, index, arr) => (
-            <React.Fragment key={index}>
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-indigo-50 border-2 border-indigo-200 flex items-center justify-center text-indigo-600 font-bold mb-2">
-                  {index + 1}
-                </div>
-                <span className="text-sm font-medium text-gray-700">{step}</span>
-              </div>
-              {index < arr.length - 1 && (
-                <div className="flex-1 h-0.5 bg-gray-200 mx-4 relative">
-                  <div className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-1/2 text-gray-300">
-                    <ChevronRight size={20} />
-                  </div>
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 flex items-start">
-        <HelpCircle className="text-indigo-500 mt-0.5 mr-3 flex-shrink-0" size={20} />
-        <div>
-          <h4 className="text-sm font-medium text-indigo-800">需要帮助？</h4>
-          <p className="text-sm text-indigo-700 mt-1">查看帮助中心获取详细的操作手册和视频教程。</p>
-          <button className="mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center">
-            <Download size={16} className="mr-1" />
-            下载操作手册
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
@@ -936,10 +892,10 @@ function StudentManagement() {
             </div>
           </div>
 
-          {/* 实训班级 */}
+          {/* 课程班级 */}
           <div className="flex items-center">
             <div className="w-32 text-right pr-4 font-bold text-gray-700">
-              <span className="text-red-500 mr-1">*</span> 实训班级:
+              <span className="text-red-500 mr-1">*</span> 课程班级:
             </div>
             <div className="flex-1 flex items-center space-x-4">
               <select 
@@ -947,12 +903,12 @@ function StudentManagement() {
                 onChange={e => setFormData({...formData, className: e.target.value})}
                 className="flex-1 border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-700 bg-white"
               >
-                <option value="" disabled>请选择实训班级</option>
+                <option value="" disabled>请选择课程班级</option>
                 <option value="电商一班">电商一班</option>
                 <option value="计算机二班">计算机二班</option>
               </select>
               <button className="text-indigo-600 hover:text-indigo-700 flex items-center whitespace-nowrap">
-                <Plus size={16} className="mr-1" /> 添加实训班级
+                <Plus size={16} className="mr-1" /> 添加课程班级
               </button>
             </div>
           </div>
@@ -1244,8 +1200,8 @@ function ClassManagement() {
   );
 }
 
-function TrainingManagement() {
-  const [trainings, setTrainings] = useState(initialTrainings);
+function CourseManagement() {
+  const [coursePlans, setCoursePlans] = useState(initialCoursePlans);
   const [searchTerm, setSearchTerm] = useState('');
   const [periodFilter, setPeriodFilter] = useState('');
   const [classFilter, setClassFilter] = useState('全部');
@@ -1287,7 +1243,7 @@ function TrainingManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const filteredTrainings = trainings.filter(t => {
+  const filteredCoursePlans = coursePlans.filter(t => {
     const matchSearch = t.name.includes(searchTerm);
     const matchClass = classFilter === '全部' || t.className === classFilter;
     const matchTeacher = teacherFilter === '全部' || t.teacher === teacherFilter;
@@ -1295,13 +1251,13 @@ function TrainingManagement() {
     return matchSearch && matchClass && matchTeacher && matchPeriod;
   });
 
-  const totalPages = Math.ceil(filteredTrainings.length / itemsPerPage);
-  const paginatedTrainings = filteredTrainings.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(filteredCoursePlans.length / itemsPerPage);
+  const paginatedCoursePlans = filteredCoursePlans.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleDelete = (id: string) => {
-    showConfirm('确定要删除该实训吗？', () => {
-      setTrainings(trainings.filter(t => t.id !== id));
-      showToast('实训已删除', 'success');
+    showConfirm('确定要删除该课程吗？', () => {
+      setCoursePlans(coursePlans.filter(t => t.id !== id));
+      showToast('课程已删除', 'success');
     });
   };
 
@@ -1310,16 +1266,16 @@ function TrainingManagement() {
       showToast('请填写完整信息', 'error');
       return;
     }
-    const newTraining = {
-      id: `TR00${trainings.length + 1}`,
+    const newCoursePlan = {
+      id: `TR00${coursePlans.length + 1}`,
       ...formData,
       progress: 0
     };
-    setTrainings([...trainings, newTraining]);
+    setCoursePlans([...coursePlans, newCoursePlan]);
     setIsAddModalOpen(false);
     setFormData({ name: '', period: '', className: '', lessonCount: 0, teacher: '' });
     setShowAddExam(false);
-    showToast('实训添加成功', 'success');
+    showToast('课程添加成功', 'success');
   };
 
   const handleEditClick = (row: any) => {
@@ -1332,10 +1288,10 @@ function TrainingManagement() {
       showToast('请填写完整信息', 'error');
       return;
     }
-    setTrainings(trainings.map(t => t.id === editFormData.id ? { ...t, ...editFormData } : t));
+    setCoursePlans(coursePlans.map(t => t.id === editFormData.id ? { ...t, ...editFormData } : t));
     setIsEditModalOpen(false);
     setShowEditExam(false);
-    showToast('实训修改成功', 'success');
+    showToast('课程修改成功', 'success');
   };
 
   const handleClearFilters = () => {
@@ -1347,13 +1303,13 @@ function TrainingManagement() {
   };
 
   const columns = [
-    { header: '实训名称', accessor: 'name' },
-    { header: '实训周期', accessor: 'period' },
-    { header: '实训班级', accessor: 'className' },
+    { header: '课程名称', accessor: 'name' },
+    { header: '课程周期', accessor: 'period' },
+    { header: '课程班级', accessor: 'className' },
     { header: '课时数量', accessor: 'lessonCount' },
     { header: '任课教师', accessor: 'teacher' },
     { 
-      header: '实训进度', 
+      header: '课程进度', 
       render: (row: any) => (
         <div className="flex items-center w-32">
           <div className="w-full bg-gray-200 rounded-full h-1.5 mr-2">
@@ -1382,12 +1338,12 @@ function TrainingManagement() {
           onClick={() => setIsAddModalOpen(true)}
           className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm flex items-center hover:bg-indigo-700 transition-colors"
         >
-          <Plus size={16} className="mr-1" /> 添加实训计划
+          <Plus size={16} className="mr-1" /> 添加课程计划
         </button>
 
         <div className="flex items-center space-x-3 flex-wrap gap-y-2">
           <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-700 whitespace-nowrap">实训周期:</label>
+            <label className="text-sm text-gray-700 whitespace-nowrap">课程周期:</label>
             <div className="flex items-center border border-gray-300 rounded bg-white px-2 py-1.5 w-48">
               <Calendar size={14} className="text-gray-400 mr-2" />
               <input 
@@ -1401,7 +1357,7 @@ function TrainingManagement() {
           </div>
 
           <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-700 whitespace-nowrap">实训班级:</label>
+            <label className="text-sm text-gray-700 whitespace-nowrap">课程班级:</label>
             <select 
               value={classFilter}
               onChange={e => { setClassFilter(e.target.value); setCurrentPage(1); }}
@@ -1429,7 +1385,7 @@ function TrainingManagement() {
           <div className="flex items-center">
             <input 
               type="text" 
-              placeholder="请输入实训名称" 
+              placeholder="请输入课程名称" 
               value={searchTerm}
               onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="border border-gray-300 rounded-l px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 w-40"
@@ -1449,12 +1405,12 @@ function TrainingManagement() {
         </div>
       </div>
 
-      <Table columns={columns} data={paginatedTrainings} actions={renderActions} />
+      <Table columns={columns} data={paginatedCoursePlans} actions={renderActions} />
       
       {totalPages > 1 && (
         <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
           <div className="text-sm text-gray-500">
-            显示 {(currentPage - 1) * itemsPerPage + 1} 到 {Math.min(currentPage * itemsPerPage, filteredTrainings.length)} 条，共 {filteredTrainings.length} 条记录
+            显示 {(currentPage - 1) * itemsPerPage + 1} 到 {Math.min(currentPage * itemsPerPage, filteredCoursePlans.length)} 条，共 {filteredCoursePlans.length} 条记录
           </div>
           <div className="flex space-x-1">
             <button 
@@ -1484,15 +1440,15 @@ function TrainingManagement() {
         </div>
       )}
 
-      <Modal title="添加实训计划" isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSubmit={handleAdd} size="lg">
+      <Modal title="添加课程计划" isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSubmit={handleAdd} size="lg">
         <div className="space-y-6">
           <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训名称:</label>
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>课程名称:</label>
             <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-md" placeholder="请输入课程名称" />
           </div>
           
           <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训班级:</label>
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>课程班级:</label>
             <div className="flex items-center space-x-2 max-w-md">
               <select value={formData.className} onChange={e => setFormData({...formData, className: e.target.value})} className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500">
                 <option value="">请选择上课班级</option>
@@ -1500,13 +1456,13 @@ function TrainingManagement() {
                 <option value="计算机二班">计算机二班</option>
               </select>
               <button className="text-blue-500 hover:text-blue-700 text-sm whitespace-nowrap flex items-center">
-                <Plus size={14} className="mr-1" /> 添加实训班级
+                <Plus size={14} className="mr-1" /> 添加课程班级
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训周期:</label>
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>课程周期:</label>
             <div className="flex items-center border border-gray-300 rounded-md px-3 py-2 max-w-md bg-white">
               <Calendar size={16} className="text-gray-400 mr-2" />
               <input type="text" value={formData.period} onChange={e => setFormData({...formData, period: e.target.value})} className="w-full focus:outline-none text-sm" placeholder="-" />
@@ -1661,15 +1617,15 @@ function TrainingManagement() {
         </div>
       </Modal>
 
-      <Modal title="修改实训计划" isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSubmit={handleEditSubmit} size="lg">
+      <Modal title="修改课程计划" isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSubmit={handleEditSubmit} size="lg">
         <div className="space-y-6">
           <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训名称:</label>
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>课程名称:</label>
             <input type="text" value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-md" placeholder="请输入课程名称" />
           </div>
           
           <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训班级:</label>
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>课程班级:</label>
             <div className="flex items-center space-x-2 max-w-md">
               <select value={editFormData.className} onChange={e => setEditFormData({...editFormData, className: e.target.value})} className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500">
                 <option value="">请选择上课班级</option>
@@ -1677,13 +1633,13 @@ function TrainingManagement() {
                 <option value="计算机二班">计算机二班</option>
               </select>
               <button className="text-blue-500 hover:text-blue-700 text-sm whitespace-nowrap flex items-center">
-                <Plus size={14} className="mr-1" /> 添加实训班级
+                <Plus size={14} className="mr-1" /> 添加课程班级
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训周期:</label>
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>课程周期:</label>
             <div className="flex items-center border border-gray-300 rounded-md px-3 py-2 max-w-md bg-white">
               <Calendar size={16} className="text-gray-400 mr-2" />
               <input type="text" value={editFormData.period} onChange={e => setEditFormData({...editFormData, period: e.target.value})} className="w-full focus:outline-none text-sm" placeholder="-" />
@@ -1901,21 +1857,21 @@ function TrainingManagement() {
         </div>
       </Modal>
 
-      <Modal title="查看实训计划" isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} size="lg" hideFooter>
+      <Modal title="查看课程计划" isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} size="lg" hideFooter>
         {viewData && (
           <div className="space-y-6">
             <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-              <label className="text-sm font-medium text-gray-700 text-right">实训名称:</label>
+              <label className="text-sm font-medium text-gray-700 text-right">课程名称:</label>
               <div className="text-sm text-gray-700">{viewData.name}</div>
             </div>
             
             <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-              <label className="text-sm font-medium text-gray-700 text-right">实训班级:</label>
+              <label className="text-sm font-medium text-gray-700 text-right">课程班级:</label>
               <div className="text-sm text-gray-700">{viewData.className}</div>
             </div>
 
             <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-              <label className="text-sm font-medium text-gray-700 text-right">实训周期:</label>
+              <label className="text-sm font-medium text-gray-700 text-right">课程周期:</label>
               <div className="text-sm text-gray-700">{viewData.period}</div>
             </div>
 
@@ -2013,7 +1969,7 @@ function TrainingManagement() {
       <Modal title="修改考试计划" isOpen={isEditExamModalOpen} onClose={() => setIsEditExamModalOpen(false)} onSubmit={() => { setIsEditExamModalOpen(false); showToast('考试计划已修改', 'success'); }} size="lg">
         <div className="space-y-6">
           <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训计划:</label>
+            <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>课程计划:</label>
             <select className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500">
               <option>{editExamData?.name || '选品'}</option>
             </select>
@@ -2103,14 +2059,14 @@ function TrainingManagement() {
             
             <div className="space-y-4 pl-8">
               <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-                <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训班级:</label>
+                <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>课程班级:</label>
                 <select className="w-full max-w-md border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
                   <option>{addHomeworkData?.className || '电商'}</option>
                 </select>
               </div>
               
               <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-                <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>实训名称:</label>
+                <label className="text-sm font-medium text-gray-700 text-right"><span className="text-red-500 mr-1">*</span>课程名称:</label>
                 <select className="w-full max-w-md border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white text-gray-500 text-sm">
                   <option>{addHomeworkData?.name || '选品'}</option>
                 </select>
@@ -2302,7 +2258,7 @@ function TeachingCalendar() {
       {/* Second row filters & Legend */}
       <div className="flex items-center space-x-6">
         <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium text-gray-700">实训周期:</label>
+          <label className="text-sm font-medium text-gray-700">课程周期:</label>
           <div className="relative">
             <input 
               type="month" 
@@ -2430,7 +2386,7 @@ function AnnouncementManagement() {
               <label className="block text-sm font-medium text-gray-700 mb-1">公告类型</label>
               <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                 <option value="重要通知">重要通知</option>
-                <option value="实训活动">实训活动</option>
+                <option value="课程活动">课程活动</option>
                 <option value="系统更新">系统更新</option>
               </select>
             </div>
@@ -2446,24 +2402,65 @@ function AnnouncementManagement() {
 }
 
 function LearningAnalysis() {
-  const [selectedCourseId, setSelectedCourseId] = useState<string>(initialCourses[0]?.id || '');
+  const [selectedCourseId, setSelectedCourseId] = useState<string>(initialCoursePlans[0]?.id || '');
+  const [selectedClass, setSelectedClass] = useState('全部班级');
+  const [selectedStudent, setSelectedStudent] = useState('全部学生');
 
-  const selectedCourse = initialCourses.find(c => c.id === selectedCourseId);
+  const selectedCourse = initialCoursePlans.find(c => c.id === selectedCourseId);
+
+  // Filter students based on selected class
+  const availableStudents = initialStudents.filter(s => 
+    selectedClass === '全部班级' || s.className === selectedClass
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex items-center space-x-4">
-          <label className="text-sm font-medium text-gray-700">选择课程：</label>
-          <select 
-            value={selectedCourseId}
-            onChange={(e) => setSelectedCourseId(e.target.value)}
-            className="block w-64 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
-          >
-            {initialCourses.map(course => (
-              <option key={course.id} value={course.id}>{course.name} ({course.className})</option>
-            ))}
-          </select>
+      <DevNote type="api" message="图表数据聚合计算量较大，建议后端采用定时任务 (Cron) 预计算，或使用 ClickHouse 等 OLAP 数据库提供查询接口。" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200 gap-4">
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">课程：</label>
+            <select 
+              value={selectedCourseId}
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+              className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
+            >
+              {initialCoursePlans.map(course => (
+                <option key={course.id} value={course.id}>{course.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">班级：</label>
+            <select 
+              value={selectedClass}
+              onChange={(e) => {
+                setSelectedClass(e.target.value);
+                setSelectedStudent('全部学生'); // Reset student when class changes
+              }}
+              className="block w-40 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
+            >
+              <option>全部班级</option>
+              {initialClasses.map(c => (
+                <option key={c.id} value={c.name}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">学生：</label>
+            <select 
+              value={selectedStudent}
+              onChange={(e) => setSelectedStudent(e.target.value)}
+              className="block w-40 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
+            >
+              <option>全部学生</option>
+              {availableStudents.map(student => (
+                <option key={student.id} value={student.name}>{student.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
         <ActionButton icon={Download} label="导出报告" variant="secondary" onClick={() => showToast('导出学情分析报告')} />
       </div>
@@ -2655,7 +2652,7 @@ function AssignmentManagement() {
 
   const columns = [
     { header: '作业标题', accessor: 'title' },
-    { header: '关联课程/实训', accessor: 'course' },
+    { header: '关联课程', accessor: 'course' },
     { header: '发布教师', accessor: 'teacher' },
     { header: '截止时间', accessor: 'deadline' },
     { header: '状态', render: (row: any) => <StatusBadge status={row.status} /> },
@@ -2687,7 +2684,7 @@ function AssignmentManagement() {
             <input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入作业标题" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">关联课程/实训</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">关联课程</label>
             <input type="text" value={formData.course} onChange={e => setFormData({...formData, course: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入课程名称" />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -2805,14 +2802,14 @@ function GradeManagement() {
   const [grades, setGrades] = useState(initialGrades);
   const [searchTerm, setSearchTerm] = useState('');
   const [classFilter, setClassFilter] = useState('所有班级');
-  const [courseFilter, setCourseFilter] = useState('所有课程/实训');
+  const [courseFilter, setCourseFilter] = useState('所有课程');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ studentName: '', studentId: '', course: '', trainingGrade: 0, examGrade: 0 });
+  const [formData, setFormData] = useState({ studentName: '', studentId: '', course: '', courseGrade: 0, examGrade: 0 });
 
   const filteredGrades = grades.filter(g => {
     const matchSearch = g.studentName.includes(searchTerm) || g.studentId.includes(searchTerm);
     // In a real app, we'd need to join with student data to filter by class
-    const matchCourse = courseFilter === '所有课程/实训' || g.course === courseFilter;
+    const matchCourse = courseFilter === '所有课程' || g.course === courseFilter;
     return matchSearch && matchCourse;
   });
 
@@ -2821,7 +2818,7 @@ function GradeManagement() {
       showToast('请填写完整信息', 'error');
       return;
     }
-    const totalGrade = Math.round((Number(formData.trainingGrade) + Number(formData.examGrade)) / 2);
+    const totalGrade = Math.round((Number(formData.courseGrade) + Number(formData.examGrade)) / 2);
     const newGrade = {
       id: `G00${grades.length + 1}`,
       ...formData,
@@ -2830,15 +2827,15 @@ function GradeManagement() {
     };
     setGrades([...grades, newGrade]);
     setIsAddModalOpen(false);
-    setFormData({ studentName: '', studentId: '', course: '', trainingGrade: 0, examGrade: 0 });
+    setFormData({ studentName: '', studentId: '', course: '', courseGrade: 0, examGrade: 0 });
     showToast('成绩录入成功', 'success');
   };
 
   const columns = [
     { header: '学生姓名', accessor: 'studentName' },
     { header: '学号', accessor: 'studentId' },
-    { header: '课程/实训名称', accessor: 'course' },
-    { header: '实训成绩', accessor: 'trainingGrade' },
+    { header: '课程名称', accessor: 'course' },
+    { header: '课程成绩', accessor: 'courseGrade' },
     { header: '考试成绩', accessor: 'examGrade' },
     { header: '总成绩', accessor: 'totalGrade', render: (row: any) => <span className="font-semibold text-indigo-600">{row.totalGrade}</span> },
     { header: '排名', accessor: 'rank' },
@@ -2869,9 +2866,9 @@ function GradeManagement() {
             onChange={(e) => setCourseFilter(e.target.value)}
             className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
           >
-            <option>所有课程/实训</option>
-            <option>双十一电商大促实训</option>
-            <option>前端开发基础实训</option>
+            <option>所有课程</option>
+            <option>双十一电商大促课程</option>
+            <option>前端开发基础课程</option>
           </select>
         </div>
         <div className="flex space-x-3">
@@ -2915,13 +2912,13 @@ function GradeManagement() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">课程/实训名称</label>
-            <input type="text" value={formData.course} onChange={e => setFormData({...formData, course: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入课程/实训名称" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">课程名称</label>
+            <input type="text" value={formData.course} onChange={e => setFormData({...formData, course: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="输入课程名称" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">实训成绩</label>
-              <input type="number" value={formData.trainingGrade} onChange={e => setFormData({...formData, trainingGrade: Number(e.target.value)})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="0-100" min="0" max="100" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">课程成绩</label>
+              <input type="number" value={formData.courseGrade} onChange={e => setFormData({...formData, courseGrade: Number(e.target.value)})} className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="0-100" min="0" max="100" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">考试成绩</label>
@@ -2982,7 +2979,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          金隅实训系统
+          金隅课程系统
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           请输入您的账号和密码进行登录
@@ -3066,7 +3063,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('analysis');
 
   if (!isLoggedIn) {
     return <Login onLogin={() => setIsLoggedIn(true)} />;
@@ -3074,149 +3071,161 @@ export default function App() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard': return <Dashboard />;
       case 'teacher': return <TeacherManagement />;
       case 'student': return <StudentManagement />;
       case 'class': return <ClassManagement />;
-      case 'training': return <TrainingManagement />;
-      case 'course': return <TeachingCalendar />;
+      case 'course': return <CourseManagement />;
+      case 'calendar': return <TeachingCalendar />;
       case 'announcement': return <AnnouncementManagement />;
       case 'analysis': return <LearningAnalysis />;
       case 'assignment': return <AssignmentManagement />;
       case 'exam': return <ExamManagement />;
       case 'grade': return <GradeManagement />;
       case 'domain': return <DomainManagement />;
-      default: return <Dashboard />;
+      default: return <LearningAnalysis />;
     }
   };
 
-  const getTopLevelTab = () => {
-    if (['dashboard'].includes(activeTab)) return 'dashboard';
-    if (['teacher', 'student', 'class'].includes(activeTab)) return 'education';
-    if (['training', 'course', 'announcement'].includes(activeTab)) return 'training';
-    if (['assignment', 'exam', 'grade'].includes(activeTab)) return 'exam';
-    if (['analysis'].includes(activeTab)) return 'analysis';
-    if (['domain'].includes(activeTab)) return 'domain';
-    return 'dashboard';
-  };
-
-  const topLevelTab = getTopLevelTab();
-
-  const topNavItems = [
-    { id: 'dashboard', label: '系统首页', icon: LayoutDashboard, defaultSub: 'dashboard' },
-    { id: 'education', label: '教务中心', icon: Users, defaultSub: 'teacher' },
-    { id: 'training', label: '实训任务', icon: BookOpen, defaultSub: 'course' },
-    { id: 'exam', label: '作业考试', icon: FileEdit, defaultSub: 'assignment' },
-    { id: 'analysis', label: '学情分析', icon: BarChart2, defaultSub: 'analysis' },
-    { id: 'domain', label: '域名管理', icon: Globe, defaultSub: 'domain' },
+  const sidebarItems = [
+    { id: 'analysis', label: '学情分析', icon: BarChart2 },
+    { 
+      id: 'teaching', 
+      label: '课程任务', 
+      icon: BookOpen,
+      children: [
+        { id: 'calendar', label: '教学日历' },
+        { id: 'course', label: '课程管理' },
+        { id: 'announcement', label: '课程公告' },
+      ]
+    },
+    { 
+      id: 'education', 
+      label: '管理中心', 
+      icon: Users,
+      children: [
+        { id: 'teacher', label: '教师管理' },
+        { id: 'student', label: '学生管理' },
+        { id: 'class', label: '班级管理' },
+      ]
+    },
+    { 
+      id: 'assignment_exam', 
+      label: '作业考试', 
+      icon: FileEdit,
+      children: [
+        { id: 'assignment', label: '作业管理' },
+        { id: 'exam', label: '考试管理' },
+        { id: 'grade', label: '成绩管理' },
+      ]
+    },
+    { id: 'domain', label: '域名管理', icon: Globe },
   ];
 
-  const subNavItems: Record<string, { id: string, label: string }[]> = {
-    education: [
-      { id: 'teacher', label: '教师管理' },
-      { id: 'student', label: '学生管理' },
-      { id: 'class', label: '班级管理' },
-    ],
-    training: [
-      { id: 'course', label: '教学日历' },
-      { id: 'training', label: '实训管理' },
-      { id: 'announcement', label: '实训公告' },
-    ],
-    exam: [
-      { id: 'assignment', label: '作业管理' },
-      { id: 'exam', label: '考试管理' },
-      { id: 'grade', label: '成绩管理' },
-    ],
-  };
-
-  const currentSubNav = subNavItems[topLevelTab] || [];
-
   return (
-    <div className="flex flex-col h-screen bg-gray-50 font-sans">
+    <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
       <GlobalOverlays />
-      {/* Top Navigation */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between px-6 h-16">
-          <div className="flex items-center">
-            <h1 className="text-xl font-bold text-indigo-600 tracking-tight mr-8">金隅实训系统</h1>
-            <nav className="flex space-x-1">
-              {topNavItems.map((item) => {
-                const isActive = topLevelTab === item.id;
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.defaultSub)}
-                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                      isActive 
-                        ? 'bg-indigo-50 text-indigo-700' 
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                  >
-                    <Icon size={18} className={`mr-2 ${isActive ? 'text-indigo-700' : 'text-gray-400'}`} />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-3">
-              <div className="flex flex-col items-end">
-                <span className="text-sm font-medium text-gray-900">管理员</span>
-                <span className="text-xs text-gray-500">深圳致学商科教育</span>
-              </div>
-              <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold border border-indigo-200">
-                管
-              </div>
-            </div>
-            <button 
-              onClick={() => {
-                showConfirm('确定要退出登录吗？', () => {
-                  setIsLoggedIn(false);
-                  showToast('已退出登录', 'success');
-                });
-              }}
-              className="text-gray-400 hover:text-gray-600 transition-colors" 
-              title="退出登录"
-            >
-              <LogOut size={20} />
-            </button>
-          </div>
+      
+      {/* Sidebar */}
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+        <div className="p-6 border-b border-gray-100">
+          <h1 className="text-xl font-bold text-indigo-600 tracking-tight">金隅课程系统</h1>
         </div>
         
-        {/* Secondary Navigation (Sub-tabs) */}
-        {currentSubNav.length > 0 && (
-          <div className="px-6 h-12 flex items-center border-t border-gray-100 bg-gray-50/50">
-            <nav className="flex space-x-6">
-              {currentSubNav.map((item) => {
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`text-sm font-medium transition-colors relative h-12 flex items-center ${
-                      isActive ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    {item.label}
-                    {isActive && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        )}
-      </header>
+        <nav className="flex-1 overflow-y-auto p-4 space-y-6">
+          {sidebarItems.map((item) => (
+            <div key={item.id} className="space-y-1">
+              <button
+                onClick={() => {
+                  if (!item.children) setActiveTab(item.id);
+                }}
+                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === item.id || (item.children?.some(child => child.id === activeTab))
+                    ? 'text-indigo-700 bg-indigo-50'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <item.icon size={18} className={`mr-3 ${
+                  activeTab === item.id || (item.children?.some(child => child.id === activeTab))
+                    ? 'text-indigo-600'
+                    : 'text-gray-400'
+                }`} />
+                {item.label}
+              </button>
+              
+              {item.children && (
+                <div className="pl-9 space-y-1">
+                  {item.children.map((child) => (
+                    <button
+                      key={child.id}
+                      onClick={() => setActiveTab(child.id)}
+                      className={`w-full text-left px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                        activeTab === child.id
+                          ? 'text-indigo-600 bg-indigo-50/50'
+                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      {child.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </nav>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-7xl mx-auto">
-          {renderContent()}
+        <div className="p-4 border-t border-gray-100">
+          <button 
+            onClick={() => showToast('正在下载操作手册...')}
+            className="w-full flex items-center px-3 py-2 text-sm font-medium text-indigo-600 rounded-md hover:bg-indigo-50 transition-colors mb-2"
+          >
+            <Download size={18} className="mr-3" />
+            操作手册下载
+          </button>
+          <div className="flex items-center space-x-3 mb-4 px-2">
+            <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold border border-indigo-200">
+              管
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-medium text-gray-900 truncate">管理员</span>
+              <span className="text-xs text-gray-500 truncate">深圳致学商科教育</span>
+            </div>
+          </div>
+          <button 
+            onClick={() => {
+              showConfirm('确定要退出登录吗？', () => {
+                setIsLoggedIn(false);
+                showToast('已退出登录', 'success');
+              });
+            }}
+            className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors"
+          >
+            <LogOut size={18} className="mr-3" />
+            退出登录
+          </button>
         </div>
-      </main>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 flex-shrink-0">
+          <h2 className="text-lg font-semibold text-gray-900">
+            {(() => {
+              const allItems = sidebarItems.flatMap(item => item.children ? [item, ...item.children] : [item]);
+              return allItems.find(i => i.id === activeTab)?.label || '学情分析';
+            })()}
+          </h2>
+          <div className="flex items-center space-x-4">
+            {/* Header actions could go here */}
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-8 bg-gray-50">
+          <div className="max-w-7xl mx-auto">
+            <DevNote type="todo" message="此处需接入 SSO 单点登录或 JWT 鉴权，并根据用户角色 (管理员/教师/学生) 动态渲染左侧菜单树和路由。" />
+            {renderContent()}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
