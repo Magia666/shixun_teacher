@@ -2406,6 +2406,61 @@ function LearningAnalysis() {
   const [selectedClass, setSelectedClass] = useState('全部班级');
   const [selectedStudent, setSelectedStudent] = useState('全部学生');
 
+  // State for chart legend toggling
+  const [hiddenSeries, setHiddenSeries] = useState<Record<string, boolean>>({});
+  const toggleSeries = (dataKey: string) => {
+    setHiddenSeries(prev => ({ ...prev, [dataKey]: !prev[dataKey] }));
+  };
+
+  const [hiddenPieSlices, setHiddenPieSlices] = useState<Record<string, boolean>>({});
+  const togglePieSlice = (name: string) => {
+    setHiddenPieSlices(prev => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  // Custom tooltips
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border border-gray-200 shadow-lg rounded-md z-50">
+          <p className="font-medium text-gray-900 mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <div key={index} className="flex items-center text-sm mt-1">
+              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: entry.color || entry.fill }} />
+              <span className="text-gray-600 mr-2">{entry.name}:</span>
+              <span className="font-semibold" style={{ color: entry.color || entry.fill }}>{entry.value}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const PieTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
+      return (
+        <div className="bg-white p-3 border border-gray-200 shadow-lg rounded-md z-50">
+          <div className="flex items-center text-sm">
+            <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: data.payload.fill || data.color }} />
+            <span className="text-gray-600 mr-2">{data.name}:</span>
+            <span className="font-semibold text-gray-900">{data.value} 人</span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Pie chart colors
+  const PIE_COLORS = {
+    '优秀 (≥90)': '#10b981',
+    '良好 (80-89)': '#3b82f6',
+    '中等 (70-79)': '#f59e0b',
+    '及格 (60-69)': '#ef4444',
+    '不及格 (<60)': '#8b5cf6'
+  };
+
   const selectedCourse = initialCoursePlans.find(c => c.id === selectedCourseId);
 
   // Filter students based on selected class
@@ -2413,9 +2468,82 @@ function LearningAnalysis() {
     selectedClass === '全部班级' || s.className === selectedClass
   );
 
+  // --- Data Calculation based on existing system data ---
+  let filteredGrades = initialGrades;
+  
+  // Filter by course
+  if (selectedCourse) {
+    // Try to match course name, fallback to all if no exact match in mock data to prevent empty charts
+    const matchedGrades = filteredGrades.filter(g => g.course === selectedCourse.name || g.course.includes(selectedCourse.name) || selectedCourse.name.includes(g.course));
+    if (matchedGrades.length > 0) {
+      filteredGrades = matchedGrades;
+    }
+  }
+
+  // Filter by class
+  if (selectedClass !== '全部班级') {
+    const studentsInClass = initialStudents.filter(s => s.className === selectedClass).map(s => s.name);
+    filteredGrades = filteredGrades.filter(g => studentsInClass.includes(g.studentName));
+  }
+
+  // Filter by student
+  if (selectedStudent !== '全部学生') {
+    filteredGrades = filteredGrades.filter(g => g.studentName === selectedStudent);
+  }
+
+  // Calculate KPIs
+  const totalRecords = filteredGrades.length || 1;
+  const avgTotal = (filteredGrades.reduce((acc, g) => acc + g.totalGrade, 0) / totalRecords).toFixed(1);
+  const avgCourse = (filteredGrades.reduce((acc, g) => acc + g.courseGrade, 0) / totalRecords).toFixed(1);
+  const avgExam = (filteredGrades.reduce((acc, g) => acc + g.examGrade, 0) / totalRecords).toFixed(1);
+
+  // Calculate Assignment Graded Rate (Global)
+  const totalAssignments = initialAssignments.length;
+  const gradedAssignments = initialAssignments.filter(a => a.status === '已批改').length;
+  const gradedRate = totalAssignments > 0 ? ((gradedAssignments / totalAssignments) * 100).toFixed(1) : '0.0';
+
+  // Calculate Score Distribution
+  const distData = [
+    { name: '90-100(优秀)', count: filteredGrades.filter(g => g.totalGrade >= 90).length },
+    { name: '80-89(良好)', count: filteredGrades.filter(g => g.totalGrade >= 80 && g.totalGrade < 90).length },
+    { name: '70-79(中等)', count: filteredGrades.filter(g => g.totalGrade >= 70 && g.totalGrade < 80).length },
+    { name: '60-69(及格)', count: filteredGrades.filter(g => g.totalGrade >= 60 && g.totalGrade < 70).length },
+    { name: '<60(不及格)', count: filteredGrades.filter(g => g.totalGrade < 60).length },
+  ];
+
+  // Calculate Score Composition (Pie Chart)
+  const compositionData = [
+    { name: '优秀 (≥90)', value: distData[0].count },
+    { name: '良好 (80-89)', value: distData[1].count },
+    { name: '中等 (70-79)', value: distData[2].count },
+    { name: '及格 (60-69)', value: distData[3].count },
+    { name: '不及格 (<60)', value: distData[4].count },
+  ].filter(d => d.value > 0);
+
+  const activeCompositionData = compositionData.filter(d => !hiddenPieSlices[d.name]);
+
+  const pieLegendPayload = compositionData.map(d => ({
+    value: d.name,
+    type: 'square',
+    id: d.name,
+    color: hiddenPieSlices[d.name] ? '#d1d5db' : PIE_COLORS[d.name as keyof typeof PIE_COLORS]
+  }));
+
+  // Calculate Course Comparison
+  const courseNames = Array.from(new Set(initialGrades.map(g => g.course)));
+  const courseComparisonData = courseNames.map(courseName => {
+    let cGrades = initialGrades.filter(g => g.course === courseName);
+    if (selectedClass !== '全部班级') {
+      const studentsInClass = initialStudents.filter(s => s.className === selectedClass).map(s => s.name);
+      cGrades = cGrades.filter(g => studentsInClass.includes(g.studentName));
+    }
+    const avg = cGrades.reduce((acc, g) => acc + g.totalGrade, 0) / (cGrades.length || 1);
+    return { name: courseName.substring(0, 6) + (courseName.length > 6 ? '...' : ''), score: Number(avg.toFixed(1)) };
+  });
+  // --------------------------------------------------------
+
   return (
     <div className="space-y-6">
-      <DevNote type="api" message="图表数据聚合计算量较大，建议后端采用定时任务 (Cron) 预计算，或使用 ClickHouse 等 OLAP 数据库提供查询接口。" />
       <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200 gap-4">
         <div className="flex flex-wrap items-center gap-6">
           <div className="flex items-center space-x-2">
@@ -2467,153 +2595,210 @@ function LearningAnalysis() {
 
       {selectedCourse ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-100 shadow-sm">
-              <p className="text-sm text-indigo-600 font-medium">平均出勤率</p>
-              <p className="text-3xl font-bold text-indigo-900 mt-2">96.5%</p>
-              <p className="text-xs text-indigo-500 mt-2">较上周上升 1.2%</p>
-            </div>
-            <div className="bg-green-50 p-6 rounded-lg border border-green-100 shadow-sm">
-              <p className="text-sm text-green-600 font-medium">作业完成率</p>
-              <p className="text-3xl font-bold text-green-900 mt-2">92.0%</p>
-              <p className="text-xs text-green-500 mt-2">较上周上升 0.5%</p>
+              <p className="text-sm text-indigo-600 font-medium">平均总成绩</p>
+              <p className="text-3xl font-bold text-indigo-900 mt-2">{filteredGrades.length > 0 ? avgTotal : '-'}</p>
+              <p className="text-xs text-indigo-500 mt-2">基于 {filteredGrades.length} 条成绩记录</p>
             </div>
             <div className="bg-blue-50 p-6 rounded-lg border border-blue-100 shadow-sm">
-              <p className="text-sm text-blue-600 font-medium">平均成绩</p>
-              <p className="text-3xl font-bold text-blue-900 mt-2">85.4</p>
-              <p className="text-xs text-blue-500 mt-2">年级排名前 15%</p>
+              <p className="text-sm text-blue-600 font-medium">平均平时成绩</p>
+              <p className="text-3xl font-bold text-blue-900 mt-2">{filteredGrades.length > 0 ? avgCourse : '-'}</p>
+              <p className="text-xs text-blue-500 mt-2">基于 {filteredGrades.length} 条成绩记录</p>
+            </div>
+            <div className="bg-cyan-50 p-6 rounded-lg border border-cyan-100 shadow-sm">
+              <p className="text-sm text-cyan-600 font-medium">平均考试成绩</p>
+              <p className="text-3xl font-bold text-cyan-900 mt-2">{filteredGrades.length > 0 ? avgExam : '-'}</p>
+              <p className="text-xs text-cyan-500 mt-2">基于 {filteredGrades.length} 条成绩记录</p>
+            </div>
+            <div className="bg-green-50 p-6 rounded-lg border border-green-100 shadow-sm">
+              <p className="text-sm text-green-600 font-medium">全局作业批改率</p>
+              <p className="text-3xl font-bold text-green-900 mt-2">{gradedRate}%</p>
+              <p className="text-xs text-green-500 mt-2">已批改 {gradedAssignments} / 总计 {totalAssignments}</p>
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <h4 className="text-base font-medium text-gray-900 mb-6">成绩分布</h4>
+              <h4 className="text-base font-medium text-gray-900 mb-6">成绩分布 (总成绩)</h4>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={[
-                    { name: '90-100', count: 12 },
-                    { name: '80-89', count: 25 },
-                    { name: '70-79', count: 15 },
-                    { name: '60-69', count: 5 },
-                    { name: '<60', count: 2 },
-                  ]}>
+                  <BarChart data={distData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                    <YAxis axisLine={false} tickLine={false} />
-                    <RechartsTooltip cursor={{fill: '#f3f4f6'}} />
-                    <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12}} />
+                    <YAxis axisLine={false} tickLine={false} allowDecimals={false} />
+                    <RechartsTooltip content={<CustomTooltip />} cursor={{fill: '#f3f4f6'}} />
+                    <Bar dataKey="count" name="人数" fill="#4f46e5" radius={[4, 4, 0, 0]} animationDuration={1000} animationEasing="ease-out" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
             <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <h4 className="text-base font-medium text-gray-900 mb-6">知识点掌握情况</h4>
+              <h4 className="text-base font-medium text-gray-900 mb-6">各分数段占比</h4>
               <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: '优秀', value: 35 },
-                        { name: '良好', value: 40 },
-                        { name: '一般', value: 15 },
-                        { name: '薄弱', value: 10 },
-                      ]}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={70}
-                      outerRadius={100}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      <Cell fill="#10b981" />
-                      <Cell fill="#3b82f6" />
-                      <Cell fill="#f59e0b" />
-                      <Cell fill="#ef4444" />
-                    </Pie>
-                    <RechartsTooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+                {compositionData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={activeCompositionData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={70}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                        animationDuration={1000}
+                        animationEasing="ease-out"
+                      >
+                        {activeCompositionData.map((entry, index) => {
+                          return <Cell key={`cell-${index}`} fill={PIE_COLORS[entry.name as keyof typeof PIE_COLORS]} />;
+                        })}
+                      </Pie>
+                      <RechartsTooltip content={<PieTooltip />} />
+                      <Legend 
+                        payload={pieLegendPayload}
+                        onClick={(e) => togglePieSlice(e.value)} 
+                        wrapperStyle={{ cursor: 'pointer' }}
+                        formatter={(value) => (
+                          <span style={{ color: hiddenPieSlices[value] ? '#9ca3af' : '#374151', textDecoration: hiddenPieSlices[value] ? 'line-through' : 'none' }}>
+                            {value}
+                          </span>
+                        )}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-gray-400">暂无数据</div>
+                )}
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <h4 className="text-base font-medium text-gray-900 mb-6">周平均成绩趋势</h4>
+              <h4 className="text-base font-medium text-gray-900 mb-6">各课程平均分对比</h4>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={[
-                    { name: '第1周', score: 78 },
-                    { name: '第2周', score: 82 },
-                    { name: '第3周', score: 80 },
-                    { name: '第4周', score: 85 },
-                    { name: '第5周', score: 88 },
-                    { name: '第6周', score: 86 },
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                    <YAxis domain={[60, 100]} axisLine={false} tickLine={false} />
-                    <RechartsTooltip />
-                    <Line type="monotone" dataKey="score" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                  </LineChart>
+                  <BarChart data={courseComparisonData} layout="vertical" margin={{ left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} />
+                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={100} tick={{fontSize: 12}} />
+                    <RechartsTooltip content={<CustomTooltip />} cursor={{fill: '#f3f4f6'}} />
+                    <Bar dataKey="score" name="平均分" fill="#10b981" radius={[0, 4, 4, 0]} barSize={20} animationDuration={1000} animationEasing="ease-out" />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
-            
             <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <h4 className="text-base font-medium text-gray-900 mb-6">需关注学生名单</h4>
-              <div className="overflow-y-auto h-72 pr-2">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50 sticky top-0">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">姓名</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">学号</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">近期表现</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">建议</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {[
-                      { name: '张三', id: '2023001', issue: '连续两次作业未交', advice: '约谈提醒' },
-                      { name: '李四', id: '2023015', issue: '近期测验不及格', advice: '课后辅导' },
-                      { name: '王五', id: '2023022', issue: '出勤率低于80%', advice: '联系辅导员' },
-                      { name: '赵六', id: '2023034', issue: '课堂互动少', advice: '课堂多提问' },
-                      { name: '陈七', id: '2023041', issue: '作业抄袭嫌疑', advice: '核实情况' },
-                    ].map((student, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{student.name}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{student.id}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-red-500">{student.issue}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-indigo-600 cursor-pointer hover:underline">{student.advice}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <h4 className="text-base font-medium text-gray-900 mb-6">平时成绩与考试成绩对比</h4>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={filteredGrades.slice(0, 10)} margin={{ bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="studentName" axisLine={false} tickLine={false} angle={-45} textAnchor="end" height={60} />
+                    <YAxis domain={[0, 100]} axisLine={false} tickLine={false} />
+                    <RechartsTooltip content={<CustomTooltip />} cursor={{fill: '#f3f4f6'}} />
+                    <Legend 
+                      verticalAlign="top" 
+                      height={36} 
+                      onClick={(e) => toggleSeries(e.dataKey)}
+                      wrapperStyle={{ cursor: 'pointer' }}
+                      formatter={(value, entry: any) => (
+                        <span style={{ color: hiddenSeries[entry.dataKey] ? '#9ca3af' : '#374151', textDecoration: hiddenSeries[entry.dataKey] ? 'line-through' : 'none' }}>
+                          {value}
+                        </span>
+                      )}
+                    />
+                    <Bar dataKey="courseGrade" name="平时成绩" fill="#3b82f6" radius={[2, 2, 0, 0]} hide={hiddenSeries['courseGrade']} animationDuration={1000} animationEasing="ease-out" />
+                    <Bar dataKey="examGrade" name="考试成绩" fill="#f59e0b" radius={[2, 2, 0, 0]} hide={hiddenSeries['examGrade']} animationDuration={1000} animationEasing="ease-out" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
+              <p className="text-xs text-gray-500 text-center mt-2">注：最多展示前10名学生的成绩对比</p>
             </div>
           </div>
-          
-          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-            <h4 className="text-base font-medium text-gray-900 mb-6">各课题作业完成率</h4>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={[
-                  { name: '课题1', rate: 95 },
-                  { name: '课题2', rate: 92 },
-                  { name: '课题3', rate: 88 },
-                  { name: '课题4', rate: 85 },
-                  { name: '课题5', rate: 90 },
-                  { name: '课题6', rate: 94 },
-                  { name: '课题7', rate: 96 },
-                ]}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                  <YAxis domain={[0, 100]} axisLine={false} tickLine={false} />
-                  <RechartsTooltip />
-                  <Area type="monotone" dataKey="rate" stroke="#3b82f6" fill="#93c5fd" fillOpacity={0.3} />
-                </AreaChart>
-              </ResponsiveContainer>
+
+          {/* 学生情况追踪 */}
+          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm mt-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+              <h4 className="text-base font-medium text-gray-900">需关注学生名单</h4>
+              <div className="flex flex-wrap gap-4 text-xs">
+                <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-red-500 mr-1.5"></span>成绩预警 (考试或总评成绩低于60分)</div>
+                <div className="flex items-center"><span className="w-2 h-2 rounded-full bg-yellow-500 mr-1.5"></span>作业预警 (存在未按时提交的作业)</div>
+              </div>
+            </div>
+            <div className="overflow-y-auto h-72 pr-2">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">姓名</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">学号</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">预警类型</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">近期表现</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {[
+                    { name: '张三', id: 'S2023012', type: '作业预警', typeColor: 'bg-yellow-500', issue: '《个人主页切图练习》未提交' },
+                    { name: '李四', id: 'S2023015', type: '成绩预警', typeColor: 'bg-red-500', issue: '前端基础随堂测不及格 (55分)' },
+                    { name: '王五', id: 'S2023022', type: '作业预警', typeColor: 'bg-yellow-500', issue: '连续2次作业未提交' },
+                    { name: '赵六', id: 'S2023034', type: '成绩预警', typeColor: 'bg-red-500', issue: '电商运营期中考试不及格 (48分)' },
+                    { name: '陈七', id: 'S2023041', type: '成绩预警', typeColor: 'bg-red-500', issue: '课程总评成绩当前低于60分' },
+                  ].map((student, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{student.name}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{student.id}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                        <span className="flex items-center">
+                          <span className={`w-2 h-2 rounded-full ${student.typeColor} mr-2`}></span>
+                          {student.type}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{student.issue}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 统计规则说明 */}
+          <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-sm mt-8 text-sm text-gray-600">
+            <h4 className="text-base font-medium text-gray-900 mb-4 flex items-center">
+              <Info size={18} className="mr-2 text-indigo-500" />
+              数据统计规则说明
+            </h4>
+            <div className="space-y-4">
+              <div>
+                <h5 className="font-medium text-gray-800 mb-1">1. 数据联动与筛选机制</h5>
+                <ul className="space-y-1 list-disc list-inside pl-2">
+                  <li><strong>数据来源：</strong>所有分析数据均实时来源于系统内的「学生成绩」、「学生信息」和「课程计划」模块。</li>
+                  <li><strong>三级联动：</strong>支持按“课程”、“班级”、“学生”进行筛选。页面上的所有 KPI 和图表数据，都会根据当前的筛选条件实时重新计算。</li>
+                  <li><strong>班级过滤逻辑：</strong>当选择特定班级时，系统会先从学生信息表中查出该班级的所有学生姓名，再用这些姓名去过滤成绩记录。</li>
+                </ul>
+              </div>
+              <div>
+                <h5 className="font-medium text-gray-800 mb-1">2. 核心 KPI 计算</h5>
+                <ul className="space-y-1 list-disc list-inside pl-2">
+                  <li><strong>平均总/平时/考试成绩：</strong>当前筛选范围内，所有对应成绩记录的各项成绩之和 ÷ 记录总数（保留1位小数）。</li>
+                  <li><strong>全局作业批改率：</strong>系统内状态为“已批改”的作业数量 ÷ 作业总数 × 100%（注：此项为全局作业统计，独立于成绩筛选逻辑）。</li>
+                </ul>
+              </div>
+              <div>
+                <h5 className="font-medium text-gray-800 mb-1">3. 图表展示逻辑</h5>
+                <ul className="space-y-1 list-disc list-inside pl-2">
+                  <li><strong>成绩分布区间：</strong>将筛选后的总成绩划分为五个区间：[90-100]优秀，[80-89]良好，[70-79]中等，[60-69]及格，&lt;60不及格。</li>
+                  <li><strong>各分数段占比（饼图）：</strong>复用成绩分布的统计结果，自动过滤掉人数为 0 的区间以避免空扇区。支持点击图例隐藏特定扇区，剩余数据会自动重新计算占比。</li>
+                  <li><strong>各课程平均分对比：</strong>横向对比不同课程的学习效果。计算时会重新应用当前的“班级筛选”条件，以确保对比的基准一致。过长的课程名称会在图表 Y 轴自动截断。</li>
+                </ul>
+              </div>
+              <div>
+                <h5 className="font-medium text-gray-800 mb-1">4. 预警名单生成规则</h5>
+                <ul className="space-y-1 list-disc list-inside pl-2">
+                  <li><strong>成绩预警：</strong>基于系统成绩表，自动筛选出考试成绩或总评成绩低于 60 分的学生记录。</li>
+                  <li><strong>作业预警：</strong>基于系统作业表，自动筛选出存在未按时提交作业记录的学生。</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
