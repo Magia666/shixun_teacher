@@ -2402,7 +2402,6 @@ function AnnouncementManagement() {
 }
 
 function LearningAnalysis() {
-  const [selectedCourseId, setSelectedCourseId] = useState<string>(initialCoursePlans[0]?.id || '');
   const [selectedClass, setSelectedClass] = useState('全部班级');
   const [selectedStudent, setSelectedStudent] = useState('全部学生');
 
@@ -2461,25 +2460,9 @@ function LearningAnalysis() {
     '不及格 (<60)': '#8b5cf6'
   };
 
-  const selectedCourse = initialCoursePlans.find(c => c.id === selectedCourseId);
-
-  // Filter students based on selected class
-  const availableStudents = initialStudents.filter(s => 
-    selectedClass === '全部班级' || s.className === selectedClass
-  );
-
   // --- Data Calculation based on existing system data ---
   let filteredGrades = initialGrades;
   
-  // Filter by course
-  if (selectedCourse) {
-    // Try to match course name, fallback to all if no exact match in mock data to prevent empty charts
-    const matchedGrades = filteredGrades.filter(g => g.course === selectedCourse.name || g.course.includes(selectedCourse.name) || selectedCourse.name.includes(g.course));
-    if (matchedGrades.length > 0) {
-      filteredGrades = matchedGrades;
-    }
-  }
-
   // Filter by class
   if (selectedClass !== '全部班级') {
     const studentsInClass = initialStudents.filter(s => s.className === selectedClass).map(s => s.name);
@@ -2490,6 +2473,23 @@ function LearningAnalysis() {
   if (selectedStudent !== '全部学生') {
     filteredGrades = filteredGrades.filter(g => g.studentName === selectedStudent);
   }
+
+  // Aggregate grades by student for the comparison chart
+  const studentGradesMap = new Map();
+  filteredGrades.forEach(g => {
+    if (!studentGradesMap.has(g.studentName)) {
+      studentGradesMap.set(g.studentName, { studentName: g.studentName, courseGrade: 0, examGrade: 0, count: 0 });
+    }
+    const s = studentGradesMap.get(g.studentName);
+    s.courseGrade += g.courseGrade;
+    s.examGrade += g.examGrade;
+    s.count += 1;
+  });
+  const aggregatedStudentGrades = Array.from(studentGradesMap.values()).map(s => ({
+    studentName: s.studentName,
+    courseGrade: Math.round(s.courseGrade / s.count),
+    examGrade: Math.round(s.examGrade / s.count)
+  }));
 
   // Calculate KPIs
   const totalRecords = filteredGrades.length || 1;
@@ -2547,19 +2547,6 @@ function LearningAnalysis() {
       <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200 gap-4">
         <div className="flex flex-wrap items-center gap-6">
           <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-700">课程：</label>
-            <select 
-              value={selectedCourseId}
-              onChange={(e) => setSelectedCourseId(e.target.value)}
-              className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
-            >
-              {initialCoursePlans.map(course => (
-                <option key={course.id} value={course.id}>{course.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center space-x-2">
             <label className="text-sm font-medium text-gray-700">班级：</label>
             <select 
               value={selectedClass}
@@ -2584,7 +2571,7 @@ function LearningAnalysis() {
               className="block w-40 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
             >
               <option>全部学生</option>
-              {availableStudents.map(student => (
+              {initialStudents.filter(s => selectedClass === '全部班级' || s.className === selectedClass).map(student => (
                 <option key={student.id} value={student.name}>{student.name}</option>
               ))}
             </select>
@@ -2593,9 +2580,8 @@ function LearningAnalysis() {
         <ActionButton icon={Download} label="导出报告" variant="secondary" onClick={() => showToast('导出学情分析报告')} />
       </div>
 
-      {selectedCourse ? (
-        <div className="space-y-6">
-          <div className="grid grid-cols-4 gap-4">
+      <div className="space-y-6">
+        <div className="grid grid-cols-4 gap-4">
             <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-100 shadow-sm">
               <p className="text-sm text-indigo-600 font-medium">平均总成绩</p>
               <p className="text-3xl font-bold text-indigo-900 mt-2">{filteredGrades.length > 0 ? avgTotal : '-'}</p>
@@ -2693,7 +2679,7 @@ function LearningAnalysis() {
               <h4 className="text-base font-medium text-gray-900 mb-6">平时成绩与考试成绩对比</h4>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={filteredGrades.slice(0, 10)} margin={{ bottom: 20 }}>
+                  <BarChart data={aggregatedStudentGrades.slice(0, 10)} margin={{ bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="studentName" axisLine={false} tickLine={false} angle={-45} textAnchor="end" height={60} />
                     <YAxis domain={[0, 100]} axisLine={false} tickLine={false} />
@@ -2773,7 +2759,7 @@ function LearningAnalysis() {
                 <h5 className="font-medium text-gray-800 mb-1">1. 数据联动与筛选机制</h5>
                 <ul className="space-y-1 list-disc list-inside pl-2">
                   <li><strong>数据来源：</strong>所有分析数据均实时来源于系统内的「学生成绩」、「学生信息」和「课程计划」模块。</li>
-                  <li><strong>三级联动：</strong>支持按“课程”、“班级”、“学生”进行筛选。页面上的所有 KPI 和图表数据，都会根据当前的筛选条件实时重新计算。</li>
+                  <li><strong>二级联动：</strong>支持按“班级”、“学生”进行筛选。页面上的所有 KPI 和图表数据，都会根据当前的筛选条件实时重新计算。</li>
                   <li><strong>班级过滤逻辑：</strong>当选择特定班级时，系统会先从学生信息表中查出该班级的所有学生姓名，再用这些姓名去过滤成绩记录。</li>
                 </ul>
               </div>
@@ -2802,11 +2788,6 @@ function LearningAnalysis() {
             </div>
           </div>
         </div>
-      ) : (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200 shadow-sm">
-          <p className="text-gray-500">请选择一门课程以查看学情分析</p>
-        </div>
-      )}
     </div>
   );
 }
