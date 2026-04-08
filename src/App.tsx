@@ -2497,9 +2497,16 @@ function LearningAnalysis() {
   const avgCourse = (filteredGrades.reduce((acc, g) => acc + g.courseGrade, 0) / totalRecords).toFixed(1);
   const avgExam = (filteredGrades.reduce((acc, g) => acc + g.examGrade, 0) / totalRecords).toFixed(1);
 
-  // Calculate Assignment Graded Rate (Global)
-  const totalAssignments = initialAssignments.length;
-  const gradedAssignments = initialAssignments.filter(a => a.status === '已批改').length;
+  // Calculate Assignment Graded Rate (Based on current class)
+  let filteredAssignments = initialAssignments;
+  if (selectedClass !== '全部班级') {
+    const coursesInClass = initialCoursePlans
+      .filter(c => c.className === selectedClass)
+      .map(c => c.name);
+    filteredAssignments = initialAssignments.filter(a => coursesInClass.includes(a.course));
+  }
+  const totalAssignments = filteredAssignments.length;
+  const gradedAssignments = filteredAssignments.filter(a => a.status === '已批改').length;
   const gradedRate = totalAssignments > 0 ? ((gradedAssignments / totalAssignments) * 100).toFixed(1) : '0.0';
 
   // Calculate Score Distribution
@@ -2767,7 +2774,7 @@ function LearningAnalysis() {
                 <h5 className="font-medium text-gray-800 mb-1">2. 核心 KPI 计算</h5>
                 <ul className="space-y-1 list-disc list-inside pl-2">
                   <li><strong>平均总/平时/考试成绩：</strong>当前筛选范围内，所有对应成绩记录的各项成绩之和 ÷ 记录总数（保留1位小数）。</li>
-                  <li><strong>全局作业批改率：</strong>系统内状态为“已批改”的作业数量 ÷ 作业总数 × 100%（注：此项为全局作业统计，独立于成绩筛选逻辑）。</li>
+                  <li><strong>作业批改率：</strong>当前筛选班级对应课程的作业中，状态为“已批改”的作业数量 ÷ 作业总数 × 100%。</li>
                 </ul>
               </div>
               <div>
@@ -3387,7 +3394,6 @@ export default function App() {
 
         <main className="flex-1 overflow-y-auto p-8 bg-gray-50">
           <div className="max-w-7xl mx-auto">
-            <DevNote type="todo" message="此处需接入 SSO 单点登录或 JWT 鉴权，并根据用户角色 (管理员/教师/学生) 动态渲染左侧菜单树和路由。" />
             {renderContent()}
           </div>
         </main>
